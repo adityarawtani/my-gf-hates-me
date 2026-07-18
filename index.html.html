@@ -1,0 +1,2667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#FFF5F8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>Girlfriend Verification Required</title>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     EVERYTHING YOU'LL WANT TO EDIT IS IN THE CONFIG BLOCK
+     (search for "CONFIG" — it is at the top of the script block at the bottom)
+     ═══════════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  /* palette — soft pink, deep plum ink (never black) */
+  --pink-50:#FFF6F9;
+  --pink-100:#FFE9F1;
+  --pink-200:#FFD5E4;
+  --pink-300:#FFBAD3;
+  --rose:#FF6FA5;
+  --cerise:#E0316F;
+  --cream:#FFF0DC;
+  --heart-c:#FF6FA5;
+  --plum:#4A1B33;
+  --plum-60:rgba(74,27,51,.60);
+  --plum-40:rgba(74,27,51,.38);
+
+  /* glass */
+  --glass:rgba(255,255,255,.58);
+  --glass-strong:rgba(255,255,255,.78);
+  --glass-line:rgba(255,255,255,.75);
+
+  /* elevation */
+  --sh-s:0 1px 2px rgba(176,42,92,.05), 0 4px 14px rgba(176,42,92,.06);
+  --sh-m:0 2px 6px rgba(176,42,92,.06), 0 18px 44px -14px rgba(176,42,92,.24);
+  --sh-l:0 34px 80px -24px rgba(176,42,92,.42);
+  --sh-btn:0 2px 4px rgba(224,49,111,.20), 0 12px 28px -8px rgba(224,49,111,.46);
+
+  /* radii */
+  --r-xl:32px; --r-lg:24px; --r-md:16px; --r-sm:11px;
+
+  /* type: SF Pro (UI) + New York (display serif) + SF Mono (system voice) */
+  --f-display:ui-serif,"New York","Iowan Old Style","Palatino",Georgia,serif;
+  --f-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+
+  /* motion */
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-io:cubic-bezier(.65,0,.35,1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. RESET + BASE
+   ═══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--f-ui);
+  color:var(--plum);
+  background:var(--pink-50);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+  overscroll-behavior-y:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select{font:inherit}
+
+/* ── ambient background: gradient + two slow drifting blobs ────────── */
+.bg{position:fixed;inset:0;z-index:-2;background:
+  linear-gradient(170deg,#FFF9FB 0%,#FFEFF5 42%,#FFE1EC 78%,#FFD6E6 100%);}
+.blob{position:fixed;z-index:-1;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none}
+.blob.a{width:70vw;height:70vw;top:-16vw;left:-24vw;background:radial-gradient(circle,#FFB3D0,transparent 68%);animation:drift 26s var(--ease-io) infinite alternate}
+.blob.b{width:78vw;height:78vw;bottom:-26vw;right:-28vw;background:radial-gradient(circle,#FFC9DC,transparent 68%);animation:drift 34s var(--ease-io) infinite alternate-reverse}
+@keyframes drift{to{transform:translate3d(6vw,4vw,0) scale(1.14)}}
+
+/* ── floating hearts layer ────────────────────────────────────────── */
+.hearts{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.heart{position:absolute;bottom:-40px;color:var(--heart-c);opacity:0;will-change:transform,opacity;
+  animation:floatUp linear forwards}
+@keyframes floatUp{
+  0%{opacity:0;transform:translate3d(0,0,0) scale(.5) rotate(0deg)}
+  12%{opacity:.34}
+  70%{opacity:.24}
+  100%{opacity:0;transform:translate3d(var(--dx),-108vh,0) scale(1) rotate(var(--rot))}
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. APP SHELL
+   ═══════════════════════════════════════════════════════════════════ */
+.app{
+  position:relative;z-index:1;
+  width:100%;max-width:460px;margin:0 auto;
+  min-height:100dvh;
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 22px);
+}
+
+/* ── progress header (the SIGNATURE element: the verification spine) ─ */
+.progress{
+  position:sticky;top:calc(env(safe-area-inset-top) + 4px);z-index:20;
+  border-radius:var(--r-md);
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid var(--glass-line);
+  box-shadow:var(--sh-s);
+  padding:11px 14px 12px;
+  margin-bottom:20px;
+  opacity:0;transform:translateY(-10px);
+  transition:opacity .5s var(--ease),transform .5s var(--ease);
+  pointer-events:none;
+}
+.progress.show{opacity:1;transform:none;pointer-events:auto}
+.progress-head{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left}
+.eyebrow{
+  font-family:var(--f-mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--plum-40);font-weight:500;
+}
+.progress-step{
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.04em;
+  color:var(--cerise);margin-left:auto;font-weight:600;
+  display:flex;align-items:center;gap:5px;
+}
+.chev{transition:transform .35s var(--ease);display:block}
+.progress.open .chev{transform:rotate(180deg)}
+.bar{height:4px;border-radius:99px;background:rgba(224,49,111,.13);overflow:hidden;margin-top:9px}
+.bar-fill{height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--rose),var(--cerise));
+  transition:width .9s var(--ease);
+  box-shadow:0 0 10px rgba(224,49,111,.45);
+}
+.steps{max-height:0;overflow:hidden;transition:max-height .45s var(--ease)}
+.progress.open .steps{max-height:230px}
+.steps ul{list-style:none;padding-top:12px;display:flex;flex-direction:column;gap:7px}
+.steps li{
+  display:flex;align-items:center;gap:9px;
+  font-size:12.5px;color:var(--plum-40);transition:color .4s var(--ease)
+}
+.steps li .tick{
+  width:15px;height:15px;border-radius:50%;flex:none;
+  border:1.5px solid rgba(224,49,111,.28);
+  display:grid;place-items:center;
+  font-size:8px;color:#fff;
+  transition:background .4s var(--ease),border-color .4s var(--ease),transform .4s var(--ease);
+}
+.steps li.done{color:var(--plum-60)}
+.steps li.done .tick{background:var(--cerise);border-color:var(--cerise);transform:scale(1.08)}
+.steps li.active{color:var(--cerise);font-weight:600}
+.steps li.active .tick{border-color:var(--cerise);box-shadow:0 0 0 3px rgba(224,49,111,.13)}
+
+/* ── screens ──────────────────────────────────────────────────────── */
+main{flex:1;display:flex;flex-direction:column;justify-content:center}
+.screen{display:none;flex-direction:column;gap:18px;padding:6px 0 8px}
+.screen.active{display:flex}
+.screen.enter{animation:screenIn .58s var(--ease) both}
+.screen.leave{animation:screenOut .26s var(--ease-io) both}
+@keyframes screenIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes screenOut{to{opacity:0;transform:translateY(-12px) scale(.99)}}
+
+/* stagger children into view */
+.screen.enter > *{animation:riseIn .6s var(--ease) both}
+.screen.enter > *:nth-child(1){animation-delay:.04s}
+.screen.enter > *:nth-child(2){animation-delay:.10s}
+.screen.enter > *:nth-child(3){animation-delay:.16s}
+.screen.enter > *:nth-child(4){animation-delay:.22s}
+.screen.enter > *:nth-child(5){animation-delay:.28s}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. COMPONENTS
+   ═══════════════════════════════════════════════════════════════════ */
+.card{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid var(--glass-line);
+  border-radius:var(--r-xl);
+  box-shadow:var(--sh-m);
+  padding:26px 22px;
+}
+.card.tight{padding:20px 18px}
+#loveCard{position:relative}
+
+h1{
+  font-family:var(--f-display);
+  font-size:clamp(30px,8.4vw,40px);
+  line-height:1.06;letter-spacing:-.024em;font-weight:600;
+  text-wrap:balance;
+}
+h2{
+  font-family:var(--f-display);
+  font-size:clamp(23px,6.2vw,29px);
+  line-height:1.14;letter-spacing:-.02em;font-weight:600;
+  text-wrap:balance;
+}
+.sub{font-size:15px;line-height:1.5;color:var(--plum-60);text-wrap:pretty}
+.fine{font-family:var(--f-mono);font-size:10.5px;line-height:1.55;color:var(--plum-40);letter-spacing:.01em}
+.serif-note{font-family:var(--f-display);font-size:19px;line-height:1.35;letter-spacing:-.01em}
+
+/* buttons */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;min-height:54px;padding:0 22px;
+  border-radius:99px;
+  font-size:16.5px;font-weight:600;letter-spacing:-.01em;
+  color:#fff;
+  background:linear-gradient(180deg,#FF83B2,var(--cerise));
+  box-shadow:var(--sh-btn);
+  transition:transform .28s var(--ease),box-shadow .28s var(--ease),opacity .28s var(--ease);
+  will-change:transform;
+}
+.btn:active{transform:scale(.955)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn.ghost{
+  background:var(--glass-strong);color:var(--cerise);
+  border:1px solid rgba(224,49,111,.18);
+  box-shadow:var(--sh-s);
+}
+.btn.small{min-height:46px;font-size:15px}
+@media (hover:hover){
+  .btn:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 4px 8px rgba(224,49,111,.22),0 20px 40px -10px rgba(224,49,111,.5)}
+  .btn.ghost:hover{box-shadow:var(--sh-m)}
+}
+:focus-visible{outline:2.5px solid var(--cerise);outline-offset:3px;border-radius:99px}
+
+/* ── console (fake loading terminal) ──────────────────────────────── */
+.console{display:flex;flex-direction:column;gap:11px;min-height:132px;justify-content:center}
+.line{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--f-mono);font-size:13px;letter-spacing:-.01em;
+  color:var(--plum-60);
+  opacity:0;transform:translateY(6px);
+  animation:riseIn .45s var(--ease) forwards;
+}
+.line.hot{color:var(--cerise);font-weight:600}
+.spinner{
+  width:13px;height:13px;flex:none;border-radius:50%;
+  border:1.8px solid rgba(224,49,111,.2);border-top-color:var(--cerise);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.line .ok{color:var(--cerise);font-size:13px;width:13px;flex:none;text-align:center}
+.dots::after{content:'';animation:dots 1.4s steps(4,end) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+
+/* ── error banner ─────────────────────────────────────────────────── */
+.alert{
+  display:none;gap:11px;align-items:flex-start;
+  border-radius:var(--r-md);padding:14px 15px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(224,49,111,.22);
+  box-shadow:var(--sh-s);
+}
+.alert.show{display:flex;animation:shake .5s var(--ease-io), riseIn .4s var(--ease)}
+.alert .bang{
+  width:19px;height:19px;flex:none;border-radius:50%;background:var(--cerise);color:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:1px;
+}
+.alert-title{font-size:14px;font-weight:650;color:var(--cerise);margin-bottom:3px}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-6px)}40%,60%{transform:translateX(6px)}}
+
+/* ── checkboxes (Terms) ───────────────────────────────────────────── */
+.terms-list{display:flex;flex-direction:column;gap:4px;margin:6px 0 14px}
+.term{
+  display:flex;align-items:center;gap:13px;
+  padding:12px 10px;border-radius:var(--r-md);
+  cursor:pointer;transition:background .3s var(--ease);
+}
+.term:active{background:rgba(255,255,255,.5)}
+.term input{position:absolute;opacity:0;pointer-events:none}
+.box{
+  width:24px;height:24px;flex:none;border-radius:8px;
+  border:1.8px solid rgba(224,49,111,.3);
+  background:rgba(255,255,255,.6);
+  display:grid;place-items:center;
+  transition:background .3s var(--ease),border-color .3s var(--ease),transform .3s var(--ease);
+}
+.box svg{stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .32s var(--ease) .04s}
+.term input:checked + .box{background:var(--cerise);border-color:var(--cerise)}
+.term input:checked + .box svg{stroke-dashoffset:0}
+.term input:checked ~ .term-label{color:var(--plum)}
+.term:active .box{transform:scale(.88)}
+.term-label{font-size:15px;line-height:1.35;color:var(--plum-40);transition:color .3s var(--ease)}
+
+/* ── love calibration slider ──────────────────────────────────────── */
+.gauge{margin:10px 0 4px}
+.readout{
+  display:flex;align-items:baseline;justify-content:center;gap:2px;
+  font-family:var(--f-display);letter-spacing:-.03em;margin-bottom:34px;
+}
+.readout .val{font-size:58px;font-weight:600;line-height:1;color:var(--cerise);font-variant-numeric:tabular-nums}
+.readout .slash{font-size:26px;color:var(--plum-40);margin:0 4px}
+.readout .max{font-size:26px;color:var(--plum-40);font-variant-numeric:tabular-nums}
+.track-wrap{position:relative;padding:16px 0}
+.track{position:relative;height:12px;border-radius:99px;background:rgba(224,49,111,.14);overflow:hidden}
+.fill{
+  position:absolute;inset:0 auto 0 0;width:50%;border-radius:99px;
+  background:linear-gradient(90deg,#FFA3C6,var(--cerise));
+  box-shadow:0 0 14px rgba(224,49,111,.5);
+}
+.fill.anim{transition:width 1.5s var(--ease)}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  position:absolute;left:0;right:0;top:0;bottom:0;width:100%;height:100%;
+  background:transparent;margin:0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:32px;height:32px;border-radius:50%;
+  background:#fff;border:1px solid rgba(224,49,111,.12);
+  box-shadow:0 2px 5px rgba(176,42,92,.2),0 8px 20px -4px rgba(176,42,92,.4);
+  cursor:grab;transition:transform .2s var(--ease);
+}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.14);cursor:grabbing}
+input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid rgba(224,49,111,.12);box-shadow:0 2px 5px rgba(176,42,92,.2),0 8px 20px -4px rgba(176,42,92,.4)}
+input[type=range]:disabled::-webkit-slider-thumb{opacity:.55;cursor:default;box-shadow:0 1px 3px rgba(176,42,92,.18)}
+.scale-labels{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--plum-40);margin-top:2px;font-variant-numeric:tabular-nums}
+.verdict{display:none}
+.verdict.show{display:block;animation:riseIn .6s var(--ease) both}
+
+/* ── the resistance zone: 85→100 the thumb strains ────────────────── */
+input[type=range].strain::-webkit-slider-thumb{transform:scaleX(.88) scaleY(1.04)}
+input[type=range].strain:active::-webkit-slider-thumb{transform:scale(1.14) scaleX(.88)}
+.fill.strain{box-shadow:0 0 22px rgba(224,49,111,.85)}
+
+/* ── the value bubble — trails the thumb by 80ms ──────────────────── */
+.bubble{
+  position:absolute;bottom:calc(100% - 6px);transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:5px 10px 6px;border-radius:99px;background:#fff;white-space:nowrap;
+  box-shadow:0 2px 6px rgba(176,42,92,.14),0 10px 24px -6px rgba(176,42,92,.4);
+  transition:left .08s linear,opacity .3s var(--ease);   /* 80ms of lag. deliberate. */
+  pointer-events:none;z-index:3;
+}
+.bubble::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#fff;
+}
+.bubble b{font-family:var(--f-ui);font-size:14px;font-weight:600;color:var(--cerise);
+  line-height:1;font-variant-numeric:tabular-nums}
+.bubble span{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em;color:var(--plum-40);line-height:1}
+.bubble.gone{opacity:0}
+
+/* ── locked-slider tooltip. a callback to the T&Cs, unremarked. ───── */
+.locked-tip{
+  position:absolute;left:50%;top:calc(100% - 2px);transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--cerise);opacity:0;transition:opacity .3s var(--ease);pointer-events:none;
+}
+.locked-tip.show{opacity:1}
+@keyframes thumbWobble{0%,100%{margin-left:0}25%{margin-left:-4px}75%{margin-left:4px}}
+input[type=range].wobble::-webkit-slider-thumb{animation:thumbWobble .34s ease-in-out 2}
+input[type=range].wobble::-moz-range-thumb{animation:thumbWobble .34s ease-in-out 2}
+
+/* ── everything is wonderful, for 1.2 seconds ─────────────────────── */
+.love-bloom{
+  position:absolute;inset:0;border-radius:var(--r-xl);pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 58%,rgba(255,255,255,.95),rgba(255,255,255,0) 66%);
+  transition:opacity .4s var(--ease);z-index:2;
+}
+.love-bloom.on{opacity:1}
+
+/* the hearts that burst upward fall back down */
+.fall-heart{
+  position:absolute;pointer-events:none;color:var(--rose);line-height:1;
+  will-change:transform,opacity;z-index:2;
+  animation:fallHeart 1.1s cubic-bezier(.4,0,1,1) forwards;
+}
+@keyframes fallHeart{
+  from{opacity:.85;transform:translate(0,0) rotate(0)}
+  to{opacity:0;transform:translate(var(--fx),var(--fy)) rotate(var(--fr))}
+}
+/* the palette gives up on her, 8% at a time */
+#s-love{transition:filter .6s var(--ease)}
+#s-love.deflated{filter:saturate(.92)}
+
+/* ── the appeal. small enough to feel like a mistake. ─────────────── */
+.appeal{
+  display:block;margin:14px auto 0;padding:4px 6px;
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;
+  color:var(--plum-40);opacity:.55;text-decoration:underline;
+}
+.appeal:active{color:var(--cerise)}
+.sheet{
+  position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:26px;
+  background:rgba(74,27,51,.26);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+}
+.sheet.show{display:grid;animation:sheetIn .3s var(--ease) both}
+@keyframes sheetIn{from{opacity:0}to{opacity:1}}
+.sheet-card{
+  width:100%;max-width:320px;text-align:center;padding:28px 22px 24px;
+  background:var(--glass-strong);border:1px solid var(--glass-line);
+  border-radius:var(--r-xl);box-shadow:var(--sh-l);
+  animation:riseIn .42s var(--ease) both;
+}
+
+/* ── game ─────────────────────────────────────────────────────────── */
+.game-wrap{position:relative;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-m);border:1px solid var(--glass-line)}
+#game{display:block;width:100%;height:268px;touch-action:none}
+.game-hud{
+  position:absolute;top:12px;left:0;right:0;
+  display:flex;justify-content:space-between;padding:0 14px;
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;
+  color:var(--plum-40);pointer-events:none;text-transform:uppercase;
+}
+.game-hud b{color:var(--cerise);font-variant-numeric:tabular-nums;font-size:13px;letter-spacing:0;
+  display:inline-block;transform-origin:center}
+/* the 9th point. gold, huge, triumphant, and a lie. */
+.game-hud b.gold{color:#E8A33D;animation:goldPop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes goldPop{40%{transform:scale(1.6)}70%{transform:scale(.94)}100%{transform:none}}
+.game-wrap::after{
+  content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 0 rgba(232,163,61,0);
+  transition:box-shadow .22s var(--ease);
+}
+.game-wrap.flash::after{box-shadow:inset 0 0 34px 6px rgba(232,163,61,.55)}
+.game-overlay{
+  position:absolute;inset:0;display:grid;place-items:center;
+  background:rgba(255,240,246,.55);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cerise);
+  transition:opacity .3s var(--ease);
+}
+.game-overlay.hide{opacity:0;pointer-events:none}
+.tapcue{animation:pulse 1.6s var(--ease-io) infinite}
+@keyframes pulse{50%{opacity:.42;transform:scale(.97)}}
+
+.scoreboard{display:flex;flex-direction:column;gap:2px;margin:2px 0 4px}
+.score-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:11px 2px;border-bottom:1px solid rgba(224,49,111,.12);
+}
+.score-row:last-child{border:0}
+.score-row .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--plum-40)}
+.score-row .v{font-family:var(--f-display);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.score-row .v.bad{color:var(--cerise)}
+.cause{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.02em;
+  color:var(--plum-40);text-align:center;margin-top:12px;
+}
+/* a medal for the exact behaviour the game is punishing */
+.achv{
+  position:absolute;top:42px;left:50%;transform:translate(-50%,-64px);
+  white-space:nowrap;padding:8px 15px;border-radius:99px;z-index:4;pointer-events:none;
+  background:var(--glass-strong);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  box-shadow:var(--sh-m);
+  font-family:var(--f-ui);font-size:12px;font-weight:600;color:var(--plum);
+  opacity:0;
+  transition:transform .55s cubic-bezier(.34,1.56,.64,1),opacity .4s var(--ease);
+}
+.achv.show{transform:translate(-50%,0);opacity:1}
+
+/* restart — only while she's actually running. sits on the ice, out of
+   the penguin's way (he lives on the left, icebergs never go below the
+   ground line). */
+.game-restart{
+  position:absolute;bottom:10px;right:10px;z-index:3;
+  padding:7px 12px;border-radius:99px;
+  background:var(--glass-strong);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);
+  box-shadow:var(--sh-s);
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--plum-40);
+  opacity:0;pointer-events:none;
+  transition:opacity .3s var(--ease),transform .12s var(--ease);
+}
+.game-restart.show{opacity:1;pointer-events:auto}
+.game-restart:active{transform:scale(.94)}
+
+/* ── quiz ─────────────────────────────────────────────────────────── */
+.qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pips{display:flex;gap:5px}
+.pip{width:22px;height:3px;border-radius:99px;background:rgba(224,49,111,.16);transition:background .4s var(--ease)}
+.pip.done{background:var(--cerise)}
+.pip.now{background:var(--rose);box-shadow:0 0 8px rgba(224,49,111,.5)}
+.qbody{animation:riseIn .45s var(--ease) both}
+.qbody.out{animation:screenOut .22s var(--ease-io) both}
+.opts{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.opt{
+  text-align:left;width:100%;
+  padding:14px 16px;border-radius:var(--r-md);
+  background:rgba(255,255,255,.62);
+  border:1px solid rgba(255,255,255,.8);
+  box-shadow:var(--sh-s);
+  font-size:15px;line-height:1.35;color:var(--plum);
+  transition:transform .22s var(--ease),background .22s var(--ease),border-color .22s var(--ease);
+}
+.opt:active{transform:scale(.975)}
+.opt.picked{background:linear-gradient(180deg,#FF83B2,var(--cerise));color:#fff;border-color:transparent;box-shadow:var(--sh-btn)}
+.opt.locked{pointer-events:none}
+.opt.locked:not(.picked){opacity:.4}
+
+/* ── the reply panel ──────────────────────────────────────────────── */
+.vp{
+  margin-top:16px;padding:14px 16px;border-radius:var(--r-md);
+  background:rgba(255,111,165,.07);border:1px solid rgba(255,111,165,.28);
+  animation:riseIn .45s var(--ease) both;
+}
+.vp.bad{background:rgba(224,49,111,.07);border-color:rgba(224,49,111,.26)}
+.vp-head{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--f-ui);font-size:14px;font-weight:650;letter-spacing:-.01em;
+  color:var(--rose);
+}
+.vp.bad .vp-head{color:var(--cerise)}
+/* glyphs, not emoji — the emoji render green and red on her phone, and a
+   green tick would be the single cheapest pixel on the site */
+.vp-mark{
+  width:19px;height:19px;flex:none;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--rose);color:#fff;font-size:11px;font-weight:700;
+}
+.vp.bad .vp-mark{background:var(--cerise)}
+.vp-line{
+  font-family:var(--f-display);font-size:15px;line-height:1.42;
+  color:var(--plum-60);margin-top:7px;
+  animation:riseIn .5s var(--ease) both;
+}
+
+/* ── Q5: she gets to type. it does not help. ──────────────────────── */
+.answer-field{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+.answer-field input{
+  width:100%;height:52px;border-radius:var(--r-md);
+  background:rgba(255,255,255,.62);border:1.5px solid var(--pink-200);
+  padding:0 15px;font-family:var(--f-ui);font-size:16px;color:var(--plum);
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
+.answer-field input::placeholder{color:var(--plum-40)}
+.answer-field input:focus{
+  outline:none;border-color:var(--rose);
+  box-shadow:0 0 0 3px rgba(255,111,165,.32);
+}
+.answer-field input:disabled{opacity:.55}
+.answer-field .btn{width:100%}
+.answer-field .btn:disabled{opacity:.4;pointer-events:none}
+@media (hover:hover){.opt:hover{transform:translateX(3px);border-color:rgba(224,49,111,.28)}}
+.skip-row{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:12px}
+.skip-btn{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--cerise);padding:9px 14px;border-radius:99px;
+  border:1px solid rgba(224,49,111,.24);background:rgba(255,255,255,.5);
+  transition:opacity .3s var(--ease),transform .22s var(--ease);
+}
+.skip-btn:active{transform:scale(.94)}
+.skip-btn:disabled{opacity:.3;pointer-events:none}
+
+/* ── survey stars ─────────────────────────────────────────────────── */
+.stars{display:flex;justify-content:center;gap:8px;margin:22px 0 8px}
+.star{
+  font-size:36px;line-height:1;
+  filter:grayscale(1);opacity:.28;
+  transform:scale(.86);
+  transition:transform .4s var(--ease),filter .4s var(--ease),opacity .4s var(--ease);
+}
+.star.lit{filter:none;opacity:1;transform:scale(1)}
+.star.pop{animation:starPop .5s var(--ease)}
+@keyframes starPop{40%{transform:scale(1.42) rotate(-9deg)}70%{transform:scale(.94)}}
+
+/* ── renewal ──────────────────────────────────────────────────────── */
+.arena{position:relative;height:290px;margin:4px 0}
+#yesBtn{
+  position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);
+  width:200px;transform-origin:center;
+  transition:width .55s var(--ease),transform .5s var(--ease),box-shadow .5s var(--ease),top .55s var(--ease),font-size .5s var(--ease);
+  z-index:2;
+}
+#noBtn{
+  position:absolute;left:50%;top:66%;
+  transform:translate(-50%,-50%);
+  width:132px;min-height:50px;
+  touch-action:none;                 /* so a tap fires the dodge instead of scrolling */
+  transition:left .34s var(--ease),top .34s var(--ease),width .4s var(--ease),transform .3s var(--ease),opacity .4s var(--ease),min-height .4s var(--ease),font-size .4s var(--ease);
+  z-index:1;
+}
+
+/* ── final reveal ─────────────────────────────────────────────────── */
+.final{gap:22px}
+.final.enter > *{animation:softIn 1.5s var(--ease) both}
+.final.enter > *:nth-child(1){animation-delay:.15s}
+.final.enter > *:nth-child(2){animation-delay:.85s}
+.final.enter > *:nth-child(3){animation-delay:1.55s}
+.final.enter > *:nth-child(4){animation-delay:2.35s}
+@keyframes softIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.photo-frame{
+  border-radius:var(--r-lg);overflow:hidden;
+  background:rgba(255,255,255,.5);
+  border:1px solid var(--glass-line);
+  box-shadow:var(--sh-l);
+  aspect-ratio:4/5;
+  display:grid;place-items:center;
+}
+.photo-frame img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-empty{
+  display:grid;place-items:center;gap:8px;text-align:center;padding:24px;
+  border:1.5px dashed rgba(224,49,111,.3);border-radius:var(--r-md);margin:16px;height:calc(100% - 32px);width:calc(100% - 32px);
+}
+.letter{
+  font-family:var(--f-display);
+  font-size:17px;line-height:1.62;letter-spacing:-.005em;
+  color:var(--plum);
+  white-space:pre-wrap;text-wrap:pretty;
+}
+.letter p + p{margin-top:14px}
+.letter-placeholder{
+  border:1.5px dashed rgba(224,49,111,.34);border-radius:var(--r-md);
+  padding:26px 18px;text-align:center;
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;color:var(--cerise);
+}
+.sig{font-family:var(--f-display);font-size:15px;color:var(--plum-40);text-align:right;margin-top:18px;font-style:italic}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(224,49,111,.28),transparent);margin:2px 0}
+
+/* ── sound toggle ─────────────────────────────────────────────────── */
+.sound{
+  position:fixed;z-index:30;
+  top:calc(env(safe-area-inset-top) + 18px);right:14px;
+  width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;font-size:13px;
+  background:var(--glass);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:var(--sh-s);opacity:0;pointer-events:none;
+  transition:opacity .4s var(--ease),transform .25s var(--ease);
+}
+.sound.show{opacity:.85;pointer-events:auto}
+.sound:active{transform:scale(.88)}
+.sound.off{opacity:.42}
+@media (min-width:520px){.sound{right:calc(50vw - 230px + 2px)}}
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. DUSK — the finale palette. The lights going down in a theatre.
+   ═══════════════════════════════════════════════════════════════════ */
+.bg-dusk{
+  position:fixed;inset:0;z-index:-1;opacity:0;pointer-events:none;
+  background:
+    radial-gradient(120vw 80vh at 50% 76%, rgba(224,49,111,.20), transparent 70%),
+    linear-gradient(145deg,#2A0A1A 0%,#4A0F2C 58%,#5B1236 100%);
+  transition:opacity 2500ms cubic-bezier(.25,.46,.45,.94);
+}
+body.dusk .bg-dusk{opacity:1}
+body.dusk .blob{opacity:.10}
+/* hearts become embers — same particles, entirely different meaning */
+body.dusk{--heart-c:#FFC98A}
+body.dusk .heart{opacity:.55;filter:drop-shadow(0 0 6px rgba(255,180,90,.5))}
+body.dusk .card{
+  background:rgba(255,255,255,.05);
+  border-color:rgba(255,240,220,.14);
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.65);
+}
+body.dusk .letter,
+body.dusk #letterMount{color:var(--cream)}
+body.dusk .sig{color:rgba(255,240,220,.5)}
+body.dusk .letter-placeholder{border-color:rgba(255,240,220,.34);color:var(--cream)}
+body.dusk .photo-frame{border-color:rgba(255,240,220,.16);background:rgba(255,255,255,.04)}
+body.dusk .photo-empty{border-color:rgba(255,240,220,.3)}
+body.dusk .fine{color:rgba(255,240,220,.45)}
+body.dusk .divider{background:linear-gradient(90deg,transparent,rgba(255,240,220,.26),transparent)}
+body.dusk .sound{background:rgba(255,255,255,.08);border-color:rgba(255,240,220,.16)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   6. COLD OPEN — terminal first, title second, button last
+   ═══════════════════════════════════════════════════════════════════ */
+#s-landing.enter > *{animation:none;opacity:1;transform:none}
+.bloom{animation:bloom .7s cubic-bezier(.16,1,.3,1) both}
+@keyframes bloom{
+  from{opacity:0;transform:scale(.94);filter:blur(8px)}
+  to{opacity:1;transform:none;filter:blur(0)}
+}
+.btn.arming{opacity:.4;box-shadow:var(--sh-s);pointer-events:auto}
+.btn.arming:active{transform:none}
+.dodge-wrap{position:relative}
+.dodge-wrap .btn{transition:transform .26s cubic-bezier(.34,1.56,.64,1),opacity .5s var(--ease),box-shadow .5s var(--ease)}
+.toast-mono{
+  position:absolute;left:50%;bottom:-22px;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--plum-40);opacity:0;transition:opacity .35s var(--ease);pointer-events:none;
+}
+.toast-mono.show{opacity:1}
+
+/* ═══════════════════════════════════════════════════════════════════
+   7. SCAN VIEWPORT — it finds her face, then lies about it
+   ═══════════════════════════════════════════════════════════════════ */
+.viewport{
+  position:relative;width:min(264px,70vw);aspect-ratio:1;margin:0 auto 4px;
+  border-radius:48px;overflow:hidden;
+  background:linear-gradient(160deg,#FFFAFC,#FFE9F2);
+  border:1.5px solid var(--pink-200);
+  box-shadow:inset 0 2px 16px rgba(176,42,92,.10), var(--sh-s);
+}
+.viewport .face{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .5s var(--ease)}
+.viewport .face svg{width:76%;height:76%}
+
+/* the real reveal: once identity is confirmed, the geometric scan
+   dissolves and the actual photo takes its place */
+.viewport .identity-photo{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;padding:10px;
+  opacity:0;transform:scale(1.05);
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+  pointer-events:none;
+}
+.viewport.revealed .face{opacity:0}
+.viewport.revealed .beam,.viewport.revealed .reticle{opacity:0}
+.viewport.revealed .identity-photo{opacity:1;transform:none}
+
+/* the mesh — dots + wireframe, brightening when the reticle locks */
+.mesh-rim{fill:none;stroke:var(--rose);stroke-width:.6;stroke-dasharray:3 4;opacity:.45}
+#meshLines{stroke:var(--rose);stroke-width:.35;opacity:.28;transition:opacity .35s var(--ease),stroke .35s var(--ease)}
+.mesh-dot{fill:var(--cerise);animation:meshDot 2.6s ease-in-out infinite}
+@keyframes meshDot{0%,100%{opacity:var(--o)}50%{opacity:calc(var(--o) * .28)}}
+.mesh-feat{fill:var(--cerise);stroke:var(--cerise);stroke-width:1.1;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.68;transition:opacity .35s var(--ease)}
+.mesh-feat path{fill:none}
+.viewport.locked #meshLines{opacity:.55;stroke:var(--cerise)}
+.viewport.locked .mesh-feat{opacity:.9}
+.viewport.locked .mesh-dot{animation-play-state:paused;opacity:var(--o)}
+.beam{
+  position:absolute;left:0;right:0;height:60px;top:-60px;
+  background:linear-gradient(transparent,rgba(255,111,165,.32),transparent);
+  mix-blend-mode:multiply;pointer-events:none;opacity:0;
+}
+.beam::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:1.5px;
+  background:var(--rose);box-shadow:0 0 12px 2px rgba(255,111,165,.85);
+}
+/* sine easing, not linear — a linear sweep reads as a progress bar,
+   a sine sweep reads as a machine looking */
+.beam.on{opacity:1;animation:sweep 1.8s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes sweep{0%{top:-60px}100%{top:100%}}
+.reticle{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s var(--ease)}
+.reticle.on{opacity:1}
+.reticle i{
+  position:absolute;width:20px;height:20px;border:2px solid var(--rose);border-radius:5px;
+  transition:transform .24s cubic-bezier(.34,1.56,.64,1);
+}
+.reticle i:nth-child(1){top:25%;left:25%;border-right:0;border-bottom:0;transform:translate(-22px,-22px)}
+.reticle i:nth-child(2){top:25%;right:25%;border-left:0;border-bottom:0;transform:translate(22px,-22px)}
+.reticle i:nth-child(3){bottom:25%;left:25%;border-right:0;border-top:0;transform:translate(-22px,22px)}
+.reticle i:nth-child(4){bottom:25%;right:25%;border-left:0;border-top:0;transform:translate(22px,22px)}
+.reticle.lock i{transform:none}
+
+/* ── hold to scan ─────────────────────────────────────────────────── */
+.holder{
+  position:relative;width:88px;height:88px;margin:22px auto 30px;
+  display:grid;place-items:center;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;
+}
+.holder svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(224,49,111,.15);stroke-width:5}
+.ring-fg{
+  fill:none;stroke:var(--cerise);stroke-width:5;stroke-linecap:round;
+  stroke-dasharray:245;stroke-dashoffset:245;
+  filter:drop-shadow(0 0 6px rgba(224,49,111,.55));
+}
+.holder-core{
+  width:62px;height:62px;border-radius:50%;
+  background:linear-gradient(180deg,#FF83B2,var(--cerise));
+  box-shadow:var(--sh-btn);display:grid;place-items:center;
+  color:#fff;font-size:20px;
+  transition:transform .2s var(--ease);
+}
+.holder.holding .holder-core{transform:scale(.9)}
+.holder-label{
+  position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--plum-40);transition:color .3s var(--ease);
+}
+
+/* ── the punchline ────────────────────────────────────────────────── */
+.stinky{
+  font-family:var(--f-display);font-weight:600;
+  font-size:clamp(30px,10vw,50px);letter-spacing:-.02em;line-height:1.03;
+  color:var(--cerise);text-align:center;
+  width:100%;max-width:100%;
+  overflow-wrap:break-word;word-break:break-word;hyphens:none;
+  animation:stinkyIn .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes stinkyIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+
+/* ── checkbox heart shards ────────────────────────────────────────── */
+.term{position:relative}
+.shard{
+  position:absolute;pointer-events:none;font-size:8px;line-height:1;color:var(--cerise);
+  will-change:transform,opacity;
+  animation:shard .44s cubic-bezier(.4,0,1,1) forwards;
+}
+@keyframes shard{
+  from{opacity:1;transform:translate(0,0) rotate(0)}
+  to{opacity:0;transform:translate(var(--sx),24px) rotate(var(--sr))}
+}
+.reneg{
+  border:0;background:none;padding:0;
+  border-bottom:1px dotted rgba(224,49,111,.4);
+  cursor:pointer;transition:color .3s var(--ease);
+}
+.reneg:active{color:var(--cerise)}
+
+/* ── accessibility ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .hearts{display:none}
+}
+</style>
+</head>
+
+<body>
+<div class="bg"></div>
+<div class="blob a"></div>
+<div class="blob b"></div>
+<div class="bg-dusk"></div>
+<div class="hearts" id="hearts" aria-hidden="true"></div>
+
+<button class="sound" id="soundBtn" aria-label="Toggle sound">🔊</button>
+
+<div class="app">
+
+  <!-- ══ PROGRESS HEADER ══════════════════════════════════════════ -->
+  <div class="progress" id="progress">
+    <button class="progress-head" id="progressHead" aria-expanded="false">
+      <span class="eyebrow">Verification Progress</span>
+      <span class="progress-step">
+        <span id="stepLabel">Step 1 of 7</span>
+        <svg class="chev" width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 1l3.5 3.5L8 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </span>
+    </button>
+    <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    <div class="steps" id="stepsPanel"><ul id="stepsList"></ul></div>
+  </div>
+
+  <main>
+
+    <!-- ══ SCREEN 1 — COLD OPEN ═══════════════════════════════════ -->
+    <section class="screen" id="s-landing">
+      <div class="console" id="console0" style="min-height:104px"></div>
+      <div id="landingReveal" style="display:none;flex-direction:column;gap:16px">
+        <div class="eyebrow bloom" style="text-align:center">Restricted Access · Est. 6 Months Ago</div>
+        <h1 class="bloom" style="text-align:center;animation-delay:.06s">Girlfriend Verification Required</h1>
+        <p class="sub bloom" style="text-align:center;animation-delay:.18s">Due to the sensitive nature of this website, we first need to confirm that you are, in fact, my girlfriend.</p>
+      </div>
+      <div class="dodge-wrap" id="beginWrap" style="display:none">
+        <button class="btn arming" id="beginBtn">Begin Verification</button>
+        <span class="toast-mono" id="notYet">not yet.</span>
+      </div>
+    </section>
+
+    <!-- ══ SCREEN 2 — IDENTITY VERIFICATION ═══════════════════════ -->
+    <section class="screen" id="s-verify">
+      <div class="viewport" id="viewport">
+        <div class="face">
+          <!-- the biometric mesh. NOT a camera feed — never ask for camera
+               permission: a system dialog on screen two would break the spell.
+               The dots and wireframe are generated in buildMesh() below;
+               the feature accents below are hand-authored and editable. -->
+          <svg id="faceMesh" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+            <ellipse class="mesh-rim" cx="50" cy="50" rx="29" ry="36.5"/>
+            <g id="meshLines"></g>
+            <g id="meshDots"></g>
+            <g class="mesh-feat">
+              <ellipse cx="39" cy="41" rx="2.6" ry="2"/>
+              <ellipse cx="61" cy="41" rx="2.6" ry="2"/>
+              <path d="M50 46 L50 56 L54.5 58.5"/>
+              <path d="M41.5 66.5 Q50 72 58.5 66.5"/>
+            </g>
+          </svg>
+        </div>
+        <div class="beam" id="beam"></div>
+        <div class="reticle" id="reticle"><i></i><i></i><i></i><i></i></div>
+        <img id="identityPhoto" class="identity-photo" alt="" aria-hidden="true" src="data:image/jpeg;base64,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">
+      </div>
+
+      <div class="card tight">
+        <div class="console" id="console1" style="min-height:76px"></div>
+      </div>
+
+      <!-- hold-to-scan: her thumb is physically committed at the punchline -->
+      <div id="holdZone" style="display:none">
+        <div class="holder" id="holder">
+          <svg viewBox="0 0 88 88">
+            <circle class="ring-bg" cx="44" cy="44" r="39"/>
+            <circle class="ring-fg" id="ringFg" cx="44" cy="44" r="39"/>
+          </svg>
+          <div class="holder-core">❤</div>
+          <span class="holder-label" id="holdLabel">Hold to scan</span>
+        </div>
+      </div>
+
+      <div id="verifyDone" style="display:none">
+        <button class="btn" id="verifyBtn">Continue</button>
+      </div>
+    </section>
+
+    <!-- ══ SCREEN 3 — TERMS & CONDITIONS ══════════════════════════ -->
+    <section class="screen" id="s-terms">
+      <div>
+        <h2>Terms &amp; Conditions</h2>
+        <p class="sub" style="margin-top:8px">You must agree to all terms in order to receive your reward.</p>
+      </div>
+      <div class="card tight">
+        <div class="terms-list" id="termsList"></div>
+        <p class="fine" style="text-align:center"><button class="reneg fine" id="renegBtn"></button></p>
+        <p class="fine" id="renegReply" style="text-align:center;margin-top:10px;color:var(--cerise);opacity:0;transition:opacity .5s var(--ease)"></p>
+      </div>
+      <div class="alert" id="termsAlert">
+        <span class="bang">!</span>
+        <div>
+          <div class="alert-title">Error.</div>
+          <div class="fine" style="color:var(--plum-60)">You must agree to the Terms &amp; Conditions to continue.<br>(This contract is legally binding.)</div>
+        </div>
+      </div>
+      <button class="btn" id="termsBtn">Continue</button>
+    </section>
+
+    <!-- ══ SCREEN 4 — LOVE CALIBRATION ════════════════════════════ -->
+    <section class="screen" id="s-love">
+      <div>
+        <div class="eyebrow">Love Calibration</div>
+        <h2 style="margin-top:8px">How much do you love your boyfriend?</h2>
+      </div>
+      <div class="card" id="loveCard">
+        <!-- the sincere celebration, 1.2s before the betrayal -->
+        <div class="love-bloom" id="loveBloom"></div>
+        <div class="gauge">
+          <div class="readout">
+            <span class="val" id="loveVal">5</span>
+            <span class="slash">/</span>
+            <span class="max" id="loveMax">10</span>
+          </div>
+          <div class="track-wrap">
+            <!-- the bubble trails the thumb by 80ms. the lag is what makes it
+                 feel like a physical object rather than a div. -->
+            <div class="bubble" id="loveBubble">
+              <b id="bubbleVal">5</b><span id="bubbleTag">polite</span>
+            </div>
+            <div class="track"><div class="fill" id="loveFill"></div></div>
+            <!-- selection scale is 0–10. After she locks it in, the max is
+                 revealed to have been 0–100 all along. See the lock handler. -->
+            <input type="range" id="loveSlider" min="0" max="10" value="5" step="1"
+                   aria-label="Love level" aria-valuetext="5">
+            <div class="locked-tip" id="lockedTip">Result submitted. Legally binding.</div>
+          </div>
+          <div class="scale-labels"><span id="scaleMin">0</span><span id="scaleMax">10</span></div>
+        </div>
+      </div>
+      <button class="btn" id="loveLock">Lock in my answer</button>
+      <div class="verdict" id="loveVerdict">
+        <div class="card" style="text-align:center">
+          <p class="serif-note">Wow.<br>I knew you secretly hated me.</p>
+        </div>
+        <button class="appeal" id="appealBtn">Appeal this decision</button>
+        <button class="btn" style="margin-top:16px" data-go="s-game">Proceed</button>
+      </div>
+    </section>
+
+    <!-- ══ APPEALS. It resolves nothing. ══════════════════════════ -->
+    <div class="sheet" id="appealSheet" aria-hidden="true">
+      <div class="sheet-card">
+        <p class="serif-note">Appeals must be submitted in person.</p>
+        <button class="btn" id="appealFine" style="margin-top:20px">Fine.</button>
+      </div>
+    </div>
+
+    <!-- ══ SCREEN 5 — PENGUIN CHALLENGE ═══════════════════════════
+         The old "Playlist Challenge" tease screen is folded into the start
+         card below. Never build a screen whose only job is to announce the
+         next screen. ══════════════════════════════════════════════════ -->
+    <section class="screen" id="s-game">
+      <div id="gameIntro">
+        <div class="eyebrow" style="text-align:center">Physical Ability Test</div>
+        <h2 style="text-align:center;margin-top:8px">You're one step away from your reward.</h2>
+        <div class="card" style="text-align:center;margin-top:18px">
+          <div style="background:var(--pink-100);border-radius:var(--r-lg);padding:14px;margin-bottom:16px">
+            <canvas id="idleCanvas" style="display:block;width:100%;height:96px"></canvas>
+          </div>
+          <p class="sub">To receive your playlist, score <b style="color:var(--cerise)">10 points</b>.</p>
+          <p class="fine" style="margin-top:10px">Tap to jump. The ice gets faster.</p>
+        </div>
+        <button class="btn" id="startChallenge" style="margin-top:18px">Start Challenge</button>
+      </div>
+
+      <div id="gameStage" style="display:none;flex-direction:column;gap:18px">
+        <div class="game-wrap">
+          <canvas id="game"></canvas>
+          <div class="game-hud"><span>Score <b id="gScore">0</b></span><span>Target <b>10</b></span></div>
+          <div class="game-overlay" id="gameOverlay"><span class="tapcue">Tap to jump</span></div>
+          <div class="achv" id="gAchv">🏅 Persistent. Just like your boyfriend.</div>
+          <button class="game-restart" id="gameRestart">↺ Restart</button>
+        </div>
+        <div id="gameResult" style="display:none;flex-direction:column;gap:18px">
+          <div class="card tight">
+            <div class="scoreboard">
+              <div class="score-row"><span class="k">Required Score</span><span class="v">10</span></div>
+              <div class="score-row"><span class="k">Your Score</span><span class="v bad" id="gFinal">0</span></div>
+            </div>
+            <p class="cause" id="gCause"></p>
+          </div>
+          <div class="card" style="text-align:center">
+            <p class="serif-note">Damn…<br>Guess you didn't want the playlist after all.</p>
+          </div>
+          <button class="btn" id="retryBtn">Try Again</button>
+          <button class="btn ghost small" data-go="s-quiz">Alternative Verification</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SCREEN 6 — RELATIONSHIP QUIZ ═══════════════════════════ -->
+    <section class="screen" id="s-quiz">
+      <div id="quizIntro">
+        <h2>Relationship Verification Quiz</h2>
+        <p class="sub" style="margin-top:8px">You may skip <b>one</b> question — but to pass, you'll still need <b>5 out of 5</b> correct. Choose wisely.</p>
+        <button class="btn" id="quizStart" style="margin-top:22px">Begin Quiz</button>
+      </div>
+
+      <div id="quizStage" style="display:none">
+        <div class="qmeta">
+          <div class="pips" id="quizPips"></div>
+          <span class="eyebrow" id="quizCount">Question 1 of 6</span>
+        </div>
+        <div class="card">
+          <div class="qbody" id="qbody"></div>
+        </div>
+        <div class="skip-row">
+          <span class="fine" id="skipNote">1 skip remaining</span>
+          <button class="skip-btn" id="skipBtn">Skip question</button>
+        </div>
+      </div>
+
+      <div id="quizResult" style="display:none">
+        <div class="card">
+          <div class="console" id="console2"></div>
+        </div>
+        <button class="btn" id="quizProceed" style="margin-top:18px;visibility:hidden" data-go="s-renew">Proceed</button>
+      </div>
+    </section>
+
+    <!-- ══ SCREEN 7 — SUBSCRIPTION RENEWAL ════════════════════════ -->
+    <section class="screen" id="s-renew">
+      <div style="text-align:center">
+        <div class="eyebrow">Subscription Renewal</div>
+        <h2 style="margin-top:8px">One final thing.</h2>
+        <p class="sub" style="margin-top:8px">Your <b>Boyfriend™</b> subscription has already expired. Would you like to renew for another month?</p>
+      </div>
+      <div class="arena" id="arena">
+        <button class="btn" id="yesBtn">YES ❤️</button>
+        <button class="btn ghost" id="noBtn">NO</button>
+      </div>
+    </section>
+
+    <!-- ══ SCREEN 8 — THE LETTER ═══════════════════════════════ -->
+    <section class="screen final" id="s-final">
+      <div class="photo-frame" id="photoFrame"></div>
+      <div class="card">
+        <div id="letterMount"></div>
+        <div class="sig" id="sigMount"></div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn" id="playlistBtn">🎵 Unlock Your Playlist</button>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   ██  CONFIG — EDIT EVERYTHING HERE  ██
+   ═══════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+
+  /* ── Nicknames ──────────────────────────────────────────────── */
+  nickname: "STINKYYYYYY",         // the Screen 2 punchline. Rendered huge.
+
+  /* ── Screen 1: Cold open ────────────────────────────────────────
+     Browsers can't read the actual iPhone model (every iPhone just
+     reports "iPhone"), so this is hardcoded. Change it if she upgrades. */
+  deviceName: "iPhone 15 Pro Max",
+
+  /* ── Screen 3: Terms & Conditions ───────────────────────────── */
+  terms: [
+    "Make me Serradura and Brownies whenever I ask",
+    "Stop biting my nipples",
+    "Laugh at all my jokes no matter how un-funny they may be",
+    "Tolerate all the sass I throw"
+  ],
+  termsFinePrint: "Terms and conditions may be renegotiated for the price of one kiss.",
+  termsRenegotiate: "Offer noted. Redeemable in person. Non-transferable. Expires: never.",
+
+  /* ── Screen 7: Quiz ──────────────────────────────────────────────
+     `answer` is the 0-based index of the correct option. `answer: -1`
+     means there IS no correct option — she cannot win, and the reply
+     depends on which wrong door she walks through.
+
+     Shape:
+       q          the question. \n makes a new line.
+       options[]  multiple choice. omit for type:'text'.
+       type       'text' → free text field + Submit. always incorrect.
+       answer     index of the right option, or -1 for the impossible ones
+       correct[]  lines shown when she gets it right
+       wrong[]    lines shown when she gets a WINNABLE one wrong
+       replies[]  one array of lines PER OPTION, for the impossible ones
+       skipReply[] lines shown if she spends her skip here
+  ── ─────────────────────────────────────────────────────────── */
+  quiz: [
+    /* ── 1 · wholesome ── */
+    { q: "Where did we go when I officially asked you out?",
+      options: ["Roadhouse Bluez", "East 7", "Alba", "Penang Table"],
+      answer: 1,
+      correct: [],
+      wrong:   ["The correct answer was: East 7."] },
+
+    /* ── 2 · wholesome ── */
+    { q: "What was the first song I told you that reminded me of you?",
+      options: ["Dancing Queen", "Angie (I've Been Lost)", "Feel So Close", "Marcel"],
+      answer: 3,
+      correct: [],
+      wrong:   ["The correct answer was: Marcel."] },
+
+    /* ── 3 · wholesome ── */
+    { q: "How many brain cells do we collectively own?",
+      options: ["0", "171 billion", "2", "We take turns using one."],
+      answer: 3,
+      correct: [],
+      wrong:   ["The correct answer was: We take turns using one."] },
+
+    /* ── 4 · impossible ── */
+    { q: "If me and your ex switched bodies, and the ONLY way to switch us back was to kiss one of us...\nWho are you kissing?",
+      options: ["You in his body", "My ex in your body", "Neither"],
+      answer: -1,
+      replies: [
+        ["So apparently looks don't matter...",
+         "Good to know I peaked in someone else's body."],
+        ["Interesting...",
+         "So my face was enough to convince you.",
+         "I'll try not to overthink that for the next 40 years."],
+        ["So we're just staying like this forever?",
+         "Bold strategy."],
+      ],
+      skipReply: ["Nice try.",
+                  "You don't get to escape emotional damage that easily."] },
+
+    /* ── 5 · text answer — 6/7 months is accepted as correct ── */
+    { q: "How many months have we been together?",
+      type: "text",
+      accept: ["6", "7", "6/7", "7/6", "6-7", "6 to 7", "6 or 7", "6 and 7",
+               "six", "seven", "six/seven", "6 months", "7 months", "6/7 months",
+               "six months", "seven months"],
+      correct: [],
+      reply: ["The correct answer was:", "6/7 months."] },
+
+    /* ── 6 · impossible ── */
+    { q: "You're offered ₹100 crore...\nBut you'll never be able to see your boyfriend again.\nDo you take the money?",
+      options: ["Yes", "No"],
+      answer: -1,
+      replies: [
+        ["Wow...",
+         "Six months together and I get sold for ₹100 crore.",
+         "I honestly thought I'd be worth at least ₹120 crore.",
+         "That's disappointing."],
+        ["₹100 crore?!",
+         "You didn't even hesitate?",
+         "That's financially irresponsible."],
+      ],
+      skipReply: ["Skipped.",
+                  "You had one skip. You saved it for this.",
+                  "I'm treating that as a yes."] },
+  ],
+  skipsAllowed: 1,
+  FAKE_SCORE: 4,        // the score she "gets" no matter what — always one short
+  REQUIRED_SCORE: 5,    // needs a perfect run
+  SHOWN_TOTAL: 5,       // denominator on the results screen (theater)
+
+  /* A skip is still a wrong answer. Used only where a question has nothing
+     better to fall back on — see the cascade in answer(). */
+  skipReply: ["Skipped.", "That still counts as incorrect."],
+
+  /* ── Screen 6: Game ─────────────────────────────────────────── */
+  gameTarget: 10,       // the score she needs
+  gameMaxPossible: 9,   // the score she can actually reach. Never raise this. 🐧
+
+  /* THE RIG IS VISIBLE. She never loses because the game is unfair — she
+     loses because the penguin is an idiot. Same idiot, every single run. */
+  deathCause: "Cause of death: distracted by love.",
+
+  /* ── Screen 10: Final Reveal ────────────────────────────────────
+     PHOTO: put a photo file next to this index.html and set the name,
+     e.g. "us.jpg". Or paste a base64 data URI to keep it one file.
+     Leave "" to show a placeholder frame.
+  ── ─────────────────────────────────────────────────────────── */
+  photoUrl: "data:image/jpeg;base64,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",
+
+  /* Blank lines separate paragraphs. Replace the whole thing. */
+  letter: `INSERT PERSONAL LETTER HERE`,
+
+  signature: "— your boyfriend, subscription renewed",
+
+  /* ── Playlist ───────────────────────────────────────────────── */
+  PLAYLIST_URL: "https://open.spotify.com/playlist/50bip8uSWjofC9s0wHQIBz?si=5c33f0288403409b&pt=cbded631a4c6839edc13be3d3361de53",
+
+  /* ── Progress rail ──────────────────────────────────────────── */
+  steps: [
+    "Identity Verification",
+    "Terms & Conditions",
+    "Love Calibration",
+    "Physical Ability Test",
+    "Relationship Quiz",
+    "Subscription Renewal"
+  ],
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ═══════════════════════════════════════════════════════════════════
+   SOUND — synthesized on the fly, no files, works offline
+   ═══════════════════════════════════════════════════════════════════ */
+const Sfx = {
+  ctx: null, on: true,
+  init(){ if (!this.ctx) { try { this.ctx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+          if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  tone(freq, dur=.09, type='sine', vol=.16, slideTo=null){
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(this.ctx.destination);
+    o.start(t); o.stop(t + dur + .02);
+  },
+  tap(){ this.tone(760, .06, 'sine', .10); },
+  soft(){ this.tone(520, .05, 'sine', .07); },
+  ok(){ this.tone(660, .09, 'sine', .13); setTimeout(()=>this.tone(990, .16, 'sine', .12), 85); },
+  err(){ this.tone(180, .17, 'triangle', .13, 120); },
+  jump(){ this.tone(560, .09, 'sine', .09, 940); },
+  die(){ this.tone(420, .34, 'triangle', .13, 90); },
+  win(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,.22,'sine',.11), i*105)); },
+};
+document.addEventListener('pointerdown', () => Sfx.init(), { once: true });
+
+const soundBtn = $('#soundBtn');
+soundBtn.addEventListener('click', () => {
+  Sfx.on = !Sfx.on;
+  soundBtn.textContent = Sfx.on ? '🔊' : '🔇';
+  soundBtn.classList.toggle('off', !Sfx.on);
+  if (Sfx.on) Sfx.tap();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   FLOATING HEARTS
+   ═══════════════════════════════════════════════════════════════════ */
+const heartLayer = $('#hearts');
+function spawnHeart(){
+  if (REDUCED || document.hidden || heartLayer.children.length > 8) return;
+  const h = document.createElement('div');
+  h.className = 'heart';
+  h.textContent = '❤';
+  const size = 10 + Math.random()*16;
+  const dur  = 9 + Math.random()*7;
+  h.style.cssText = `left:${Math.random()*100}%;font-size:${size}px;
+    --dx:${(Math.random()*60-30)}px;--rot:${(Math.random()*50-25)}deg;
+    animation-duration:${dur}s`;
+  heartLayer.appendChild(h);
+  setTimeout(() => h.remove(), dur*1000 + 200);
+}
+setInterval(spawnHeart, 2300);
+setTimeout(spawnHeart, 700);
+
+/* burst of hearts from a point — used at happy moments */
+function heartBurst(n = 12){
+  if (REDUCED) return;
+  for (let i = 0; i < n; i++) setTimeout(spawnHeart, i * 90);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROGRESS RAIL
+   ═══════════════════════════════════════════════════════════════════ */
+const progressEl = $('#progress');
+const stepsList  = $('#stepsList');
+CONFIG.steps.forEach(name => {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="tick">✓</span><span>${name}</span>`;
+  stepsList.appendChild(li);
+});
+$('#progressHead').addEventListener('click', () => {
+  const open = progressEl.classList.toggle('open');
+  $('#progressHead').setAttribute('aria-expanded', open);
+  Sfx.soft();
+});
+
+let currentStep = -1;
+function setStep(i){                       // i = 0-based index, or -1 to hide
+  currentStep = i;
+  progressEl.classList.toggle('show', i >= 0);
+  soundBtn.classList.toggle('show', i >= 0);
+  if (i < 0) return;
+  $('#stepLabel').textContent = `Step ${i+1} of ${CONFIG.steps.length}`;
+  $('#barFill').style.width = `${((i) / CONFIG.steps.length) * 100}%`;
+  $$('#stepsList li').forEach((li, n) => {
+    li.classList.toggle('done', n < i);
+    li.classList.toggle('active', n === i);
+  });
+}
+function completeStep(i){                  // tick a step off with a little chime
+  $$('#stepsList li')[i]?.classList.add('done');
+  $('#barFill').style.width = `${((i+1) / CONFIG.steps.length) * 100}%`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN ROUTER
+   ═══════════════════════════════════════════════════════════════════ */
+const SCREEN_STEP = {          // which progress step each screen belongs to
+  's-landing': -1,
+  's-verify': 0, 's-terms': 1, 's-love': 2,
+  's-game': 3, 's-quiz': 4, 's-renew': 5,
+  's-final': -1,
+};
+let activeScreen = null;
+const onEnter = {};            // per-screen setup hooks, registered below
+
+async function showScreen(id){
+  const next = $('#' + id);
+  if (activeScreen === next) return;
+
+  if (activeScreen){
+    activeScreen.classList.add('leave');
+    await wait(REDUCED ? 0 : 260);
+    activeScreen.classList.remove('active', 'leave', 'enter');
+  }
+  activeScreen = next;
+  next.classList.add('active', 'enter');
+  window.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
+  setStep(SCREEN_STEP[id]);
+  next.addEventListener('animationend', () => next.classList.remove('enter'), { once: true });
+  onEnter[id]?.();
+}
+
+/* any element with data-go="screen-id" navigates */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go]');
+  if (!t) return;
+  Sfx.tap();
+  if (currentStep >= 0) completeStep(currentStep);
+  showScreen(t.dataset.go);
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   FAKE CONSOLE — types out "system" lines one at a time
+   ═══════════════════════════════════════════════════════════════════ */
+async function runConsole(el, lines){
+  el.innerHTML = '';
+  for (const line of lines){
+    const div = document.createElement('div');
+    div.className = 'line' + (line.hot ? ' hot' : '');
+    const icon = line.spin ? '<span class="spinner"></span>'
+               : line.tick ? '<span class="ok">✓</span>'
+               : '<span class="ok" style="opacity:.3">›</span>';
+    div.innerHTML = `${icon}<span${line.dots ? ' class="dots"' : ''}>${line.t}</span>`;
+    el.appendChild(div);
+    Sfx.soft();
+    await wait(REDUCED ? 60 : (line.wait ?? 900));
+    if (line.spin) div.querySelector('.spinner').outerHTML = '<span class="ok">✓</span>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 1 — COLD OPEN
+   Terminal first, title second, button last. The device-name line is the
+   hook: it's the moment she stops scrolling and goes "wait, what?"
+   ═══════════════════════════════════════════════════════════════════ */
+const beginWrap = $('#beginWrap'), beginBtn = $('#beginBtn');
+let beginArmed = false, dodged = false;
+
+async function coldOpen(){
+  const el = $('#console0');
+  el.innerHTML = '';
+  const lines = [
+    { t: 'establishing secure connection', dots: true, spin: true, wait: 1400 },
+    { t: 'verifying device', dots: true, spin: true, wait: 1500 },
+    { t: `device recognised: ${CONFIG.deviceName}`, hot: true, tick: true, wait: 900 },
+  ];
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    const div = document.createElement('div');
+    div.className = 'line' + (line.hot ? ' hot' : '');
+    const icon = line.spin ? '<span class="spinner"></span>' : '<span class="ok">✓</span>';
+    div.innerHTML = `${icon}<span${line.dots ? ' class="dots"' : ''}>${line.t}</span>`;
+    el.appendChild(div);
+    Sfx.soft();
+    /* the button shows up early but isn't ready — that's the whole gag */
+    if (i === 0) setTimeout(() => { beginWrap.style.display = 'block'; }, 400);
+    await wait(REDUCED ? 60 : line.wait);
+    if (line.spin) div.querySelector('.spinner').outerHTML = '<span class="ok">✓</span>';
+  }
+  await wait(REDUCED ? 0 : 900);        // dead air. let her read it twice.
+
+  $('#landingReveal').style.display = 'flex';
+  Sfx.tone(520, .12, 'sine', .08);
+  await wait(REDUCED ? 0 : 1200);
+
+  beginArmed = true;
+  beginBtn.classList.remove('arming');
+  $('#notYet').classList.remove('show');
+}
+
+/* press it before it's ready → it dodges once. Planted here at zero stakes
+   so the NO button's dodge six minutes later reads as a callback. */
+beginBtn.addEventListener('click', () => {
+  if (!beginArmed){
+    Sfx.tone(300, .07, 'triangle', .07);
+    if (!dodged){
+      dodged = true;
+      beginBtn.style.transform = 'translateX(-42px)';
+      $('#notYet').classList.add('show');
+      setTimeout(() => { beginBtn.style.transform = 'translateX(42px)'; }, 300);
+      setTimeout(() => { beginBtn.style.transform = ''; }, 620);
+    }
+    return;
+  }
+  Sfx.tap();
+  showScreen('s-verify');
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 2 — IDENTITY VERIFICATION
+   The scan finds her face and then lies about it. Failing *upward* into a
+   bigger claim is funnier than failing directly.
+   ═══════════════════════════════════════════════════════════════════ */
+const beam = $('#beam'), reticle = $('#reticle'), holder = $('#holder'), ringFg = $('#ringFg');
+const viewportEl = $('#viewport');
+const HOLD_MS = 1600, RING_LEN = 245;
+
+/* ── the biometric mesh ────────────────────────────────────────────
+   A face-shaped point cloud on a triangulated grid. Built once, at boot.
+   Deterministic — no random, so it looks identical on every device.
+   Tune STEP for density: smaller = denser mesh. ─────────────────── */
+(function buildMesh(){
+  const STEP = 7.2, CX = 50, CY = 50, RX = 29, RY = 36.5;
+  const NS = 'http://www.w3.org/2000/svg';
+  const at = {}, pts = [];
+
+  for (let gy = -6; gy <= 6; gy++){
+    for (let gx = -5; gx <= 5; gx++){
+      const x = CX + gx * STEP, y = CY + gy * STEP;
+      const nx = (x - CX) / RX, ny = (y - CY) / RY;
+      const d = Math.sqrt(nx * nx + ny * ny);
+      if (d > 1) continue;                       // clip to the face oval
+      at[gx + '|' + gy] = true;
+      pts.push({ gx, gy, x, y, d });
+    }
+  }
+
+  const lines = $('#meshLines'), dots = $('#meshDots');
+  const link = (p, dx, dy) => {
+    if (!at[(p.gx + dx) + '|' + (p.gy + dy)]) return;
+    const l = document.createElementNS(NS, 'line');
+    l.setAttribute('x1', p.x); l.setAttribute('y1', p.y);
+    l.setAttribute('x2', p.x + dx * STEP); l.setAttribute('y2', p.y + dy * STEP);
+    lines.appendChild(l);
+  };
+  pts.forEach(p => { link(p, 1, 0); link(p, 0, 1); link(p, 1, 1); });
+
+  /* dots fade and shrink toward the rim — reads as a projection falling off */
+  pts.forEach((p, i) => {
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('class', 'mesh-dot');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+    c.setAttribute('r', (1.5 - p.d * .55).toFixed(2));
+    c.style.setProperty('--o', (.92 - p.d * .42).toFixed(2));
+    c.style.animationDelay = (-(i % 9) * .29).toFixed(2) + 's';
+    dots.appendChild(c);
+  });
+})();
+
+function scanLine(text, hot){
+  const el = $('#console1');
+  const div = document.createElement('div');
+  div.className = 'line' + (hot ? ' hot' : '');
+  div.innerHTML = `<span class="ok" style="opacity:.3">›</span><span>${text}</span>`;
+  el.appendChild(div);
+  while (el.children.length > 3) el.firstChild.remove();   // fixed 3-line block, nothing jumps
+  Sfx.soft();
+}
+
+onEnter['s-verify'] = async () => {
+  $('#console1').innerHTML = '';
+  $('#holdZone').style.display = 'none';
+  $('#verifyDone').style.display = 'none';
+  reticle.classList.remove('on', 'lock');
+  viewportEl.classList.remove('locked');
+  beam.classList.add('on');
+
+  scanLine('Initializing Girlfriend Verification…');
+  await wait(REDUCED ? 60 : 1500);
+  scanLine('Scanning face…');
+  await wait(REDUCED ? 60 : 1900);
+
+  /* reticle corners snap in and lock */
+  reticle.classList.add('on');
+  await wait(60);
+  reticle.classList.add('lock');
+  viewportEl.classList.add('locked');      // the mesh sharpens. it has "found" her.
+  Sfx.tone(700, .07, 'sine', .09);
+
+  scanLine('Face detected.');
+  await wait(REDUCED ? 60 : 1100);
+  scanLine('Face detected.');
+  await wait(REDUCED ? 60 : 1000);
+  scanLine('Face detected — reassessing.');
+  await wait(REDUCED ? 60 : 1500);
+
+  beam.classList.remove('on');
+  reticle.classList.remove('lock');
+  viewportEl.classList.remove('locked');
+  Sfx.err();
+  scanLine('Face scan unavailable.', true);
+  await wait(REDUCED ? 60 : 700);
+  scanLine('Please move your phone closer.', true);
+  await wait(REDUCED ? 0 : 600);
+
+  $('#holdZone').style.display = 'block';
+  $('#holdZone').style.animation = 'riseIn .5s var(--ease) both';
+};
+
+/* ── hold to scan ─────────────────────────────────────────────────── */
+let holdRaf = null, holdT0 = 0, holdDone = false;
+
+function holdStart(e){
+  if (holdDone) return;
+  e.preventDefault();
+  holder.classList.add('holding');
+  holdT0 = performance.now();
+  Sfx.init();
+  const step = now => {
+    const p = Math.min(1, (now - holdT0) / HOLD_MS);
+    ringFg.style.strokeDashoffset = RING_LEN * (1 - p);
+    if (p >= 1){ holdComplete(); return; }
+    holdRaf = requestAnimationFrame(step);
+  };
+  holdRaf = requestAnimationFrame(step);
+}
+
+function holdEnd(){
+  if (holdDone) return;
+  cancelAnimationFrame(holdRaf);
+  holder.classList.remove('holding');
+  /* released early — the ring just drains back. no comment, no joke. */
+  ringFg.style.transition = 'stroke-dashoffset .4s var(--ease)';
+  ringFg.style.strokeDashoffset = RING_LEN;
+  setTimeout(() => ringFg.style.transition = '', 420);
+}
+
+async function holdComplete(){
+  holdDone = true;
+  holder.classList.remove('holding');
+  holder.style.pointerEvents = 'none';
+  Sfx.tone(880, .12, 'sine', .12);
+  $('#holdLabel').textContent = 'Scanning…';
+
+  beam.classList.add('on');
+  await wait(REDUCED ? 60 : 1200);
+  $('#console1').innerHTML = '';
+  scanLine('Analyzing…');
+  await wait(REDUCED ? 60 : 2100);
+  scanLine('Strong odor detected.', true);
+  await wait(REDUCED ? 60 : 1400);
+  scanLine('Identity confirmed.', true);
+  Sfx.ok();
+  /* swap the geometric face-scan for the real photo */
+  $('#viewport').classList.add('revealed', 'locked');
+  await wait(REDUCED ? 60 : 900);       // dead air. the joke is the pause.
+
+  beam.classList.remove('on');
+  $('#holdZone').style.display = 'none';
+
+  /* the punchline. no rescue, no apology. */
+  $('#console1').innerHTML = `<div class="stinky">${CONFIG.nickname}</div>`;
+  Sfx.win(); heartBurst(9);
+  await wait(REDUCED ? 0 : 700);
+
+  $('#verifyDone').style.display = 'block';
+  $('#verifyDone').style.animation = 'riseIn .5s var(--ease) both';
+}
+
+holder.addEventListener('pointerdown', holdStart);
+addEventListener('pointerup', holdEnd);
+addEventListener('pointercancel', holdEnd);
+
+$('#verifyBtn').addEventListener('click', () => {
+  Sfx.tap(); completeStep(0); showScreen('s-terms');
+});
+
+function revealBtn(btn){
+  btn.style.visibility = 'visible';
+  btn.style.animation = 'none';
+  void btn.offsetWidth;
+  btn.style.animation = 'riseIn .5s var(--ease) both';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 3 — TERMS & CONDITIONS
+   Boxes start UNCHECKED. She has to actively agree to each one.
+   ═══════════════════════════════════════════════════════════════════ */
+const HEART_SVG = `<svg width="13" height="12" viewBox="0 0 13 12" fill="none"><path d="M6.5 11S1 7.7 1 4.3A2.8 2.8 0 0 1 6.5 3 2.8 2.8 0 0 1 12 4.3C12 7.7 6.5 11 6.5 11Z" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+const termsList = $('#termsList');
+
+CONFIG.terms.forEach((text, i) => {
+  const label = document.createElement('label');
+  label.className = 'term';
+  label.innerHTML = `<input type="checkbox" data-term="${i}">
+                     <span class="box">${HEART_SVG}</span>
+                     <span class="term-label">${text}</span>`;
+  termsList.appendChild(label);
+});
+
+/* the heart tick shatters into three pieces and falls. the most
+   disproportionately delightful 440ms available. */
+function shatter(row){
+  if (REDUCED) return;
+  const box = row.querySelector('.box');
+  const bx = box.offsetLeft + box.offsetWidth / 2;
+  const by = box.offsetTop + box.offsetHeight / 2;
+  for (let i = 0; i < 3; i++){
+    const s = document.createElement('span');
+    s.className = 'shard';
+    s.textContent = '❤';
+    s.style.left = (bx - 4) + 'px';
+    s.style.top  = (by - 4) + 'px';
+    s.style.setProperty('--sx', (i - 1) * 11 + (Math.random() * 6 - 3) + 'px');
+    s.style.setProperty('--sr', (Math.random() * 160 - 80) + 'deg');
+    row.appendChild(s);
+    setTimeout(() => s.remove(), 500);
+  }
+}
+
+termsList.addEventListener('change', e => {
+  const row = e.target.closest('.term');
+  if (e.target.checked){ Sfx.tap(); }
+  else { Sfx.soft(); shatter(row); }
+  $('#termsAlert').classList.remove('show');
+});
+
+/* the renegotiation line is tappable */
+$('#renegBtn').textContent = CONFIG.termsFinePrint;
+$('#renegBtn').addEventListener('click', () => {
+  Sfx.soft();
+  $('#renegReply').textContent = CONFIG.termsRenegotiate;
+  $('#renegReply').style.opacity = '1';
+});
+
+$('#termsBtn').addEventListener('click', () => {
+  const all = $$('#termsList input').every(c => c.checked);
+  if (!all){
+    Sfx.err();
+    $('#termsAlert').classList.remove('show');
+    void $('#termsAlert').offsetWidth;
+    $('#termsAlert').classList.add('show');
+    return;
+  }
+  Sfx.ok(); completeStep(1); showScreen('s-love');
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 4 — LOVE CALIBRATION
+   The slider is 0–100. After she locks it in, the scale is revealed to
+   have been 0–1000 all along. Her number never moves. It just... shrinks.
+   ═══════════════════════════════════════════════════════════════════ */
+const slider = $('#loveSlider'), loveFill = $('#loveFill'), loveVal = $('#loveVal');
+const bubble = $('#loveBubble'), bubbleVal = $('#bubbleVal'), bubbleTag = $('#bubbleTag');
+const loveCard = $('#loveCard'), loveBloom = $('#loveBloom'), lockedTip = $('#lockedTip');
+let loveLocked = false, lastShown = -1, hitMax = false, lockedValue = 5;
+
+/* Selection scale is a plain 0–10. After she locks it in, the max is
+   revealed to have been /100 all along, so her number keeps its value but
+   the scale grows around it (10 → 100). The thumb and the fill deflate
+   together so they always point at the same spot. */
+const SEL_MAX = 10, REVEAL_MAX = 100;
+
+/* ── the bubble editorialises ──────────────────────────────────────
+   She'll drag back and forth to read them all. That's not a bug, that's
+   forty extra seconds of her smiling at her phone. */
+function loveTag(v){
+  if (v >= 10) return 'there she is ❤️';
+  if (v >= 9)  return 'so close';
+  if (v >= 8)  return 'getting warmer';
+  if (v >= 5)  return 'polite';
+  if (v >= 2)  return 'ouch';
+  return '…';
+}
+
+function paintSlider(){
+  if (loveLocked) return;
+  const v = +slider.value, p = v / SEL_MAX * 100;
+
+  loveFill.style.width = p + '%';
+  loveVal.textContent  = v;
+  bubbleVal.textContent = v;
+  bubbleTag.textContent = loveTag(v);
+  slider.setAttribute('aria-valuetext', v);
+
+  /* thumb centre travels between 16px and (100% − 16px) */
+  bubble.style.left = `calc(16px + ${p / 100} * (100% - 32px))`;
+
+  if (v !== lastShown){
+    Sfx.soft();
+    if (v === SEL_MAX && !hitMax) celebrateMax();
+    lastShown = v;
+  }
+}
+
+/* ── celebrate, then betray ────────────────────────────────────────
+   The betrayal is only funny if the celebration was sincere first. */
+function celebrateMax(){
+  hitMax = true;
+  loveBloom.classList.add('on');
+  Sfx.win(); heartBurst(12);
+  setTimeout(() => loveBloom.classList.remove('on'), 900);
+}
+
+slider.addEventListener('input', () => {
+  if (loveLocked){ refuseSlider(); return; }
+  paintSlider();
+});
+slider.value = 5;
+paintSlider();
+
+/* ── the slider does not move again. the gag IS the irreversibility. ── */
+function refuseSlider(){
+  slider.value = lockedValue;
+  slider.classList.remove('wobble'); void slider.offsetWidth;
+  slider.classList.add('wobble');
+  lockedTip.classList.add('show');
+  Sfx.err();
+  clearTimeout(refuseSlider.t);
+  refuseSlider.t = setTimeout(() => {
+    lockedTip.classList.remove('show');
+    slider.classList.remove('wobble');
+  }, 2200);
+}
+slider.addEventListener('pointerdown', () => { if (loveLocked) refuseSlider(); });
+
+/* ── the hearts fall back down ─────────────────────────────────────── */
+function heartsFall(n = 10){
+  if (REDUCED) return;
+  const w = loveCard.offsetWidth;
+  for (let i = 0; i < n; i++){
+    const h = document.createElement('div');
+    h.className = 'fall-heart';
+    h.textContent = '❤';
+    h.style.cssText = `left:${8 + Math.random() * (w - 16)}px;top:${20 + Math.random() * 40}px;
+      font-size:${8 + Math.random() * 8}px;
+      --fx:${(Math.random() * 40 - 20).toFixed(0)}px;--fy:${(120 + Math.random() * 60).toFixed(0)}px;
+      --fr:${(Math.random() * 120 - 60).toFixed(0)}deg;
+      animation-delay:${(i * 45)}ms`;
+    loveCard.appendChild(h);
+    setTimeout(() => h.remove(), 1400 + i * 45);
+  }
+}
+
+$('#loveLock').addEventListener('click', async () => {
+  if (loveLocked) return;
+  loveLocked = true;
+  Sfx.tap();
+  const answer = +slider.value;                 // her chosen love, 0–10
+
+  $('#loveLock').style.display = 'none';
+  bubble.classList.add('gone');
+  loveVal.textContent = answer;                 // her number never changes
+
+  /* THE PAUSE. Everything is fine. Let her believe it.
+     Never rush a setup to get to a punchline. */
+  await wait(REDUCED ? 0 : 1200);
+
+  /* Switch to the /100 scale WITHOUT moving anything yet: the thumb and
+     fill hold their current spot (answer/10 of the track). */
+  loveFill.classList.remove('anim');            // we drive width per-frame, in sync
+  slider.max = REVEAL_MAX;                       // 10 → 100
+  const startPos = answer * (REVEAL_MAX / SEL_MAX);   // keeps the thumb in place
+  const endPos   = answer;                            // where it deflates to
+  slider.value = startPos;
+  loveFill.style.width = startPos + '%';
+  Sfx.tone(300, 1.2, 'sine', .07, 90);
+
+  /* the deflation, animated in reverse. she did nothing and became
+     inadequate. that's the funniest possible framing. */
+  setTimeout(() => { heartsFall(10); $('#s-love').classList.add('deflated'); }, 420);
+
+  const t0 = performance.now(), DUR = REDUCED ? 1 : 1500;
+  (function count(now){
+    const p = Math.min(1, (now - t0) / DUR);
+    const eased = 1 - Math.pow(1 - p, 3);
+    /* thumb + fill deflate together, so they always point at the same spot */
+    const pos = startPos + (endPos - startPos) * eased;
+    slider.value = Math.round(pos);
+    loveFill.style.width = pos + '%';
+    /* the scale grows around her number: 10 → 100 */
+    const n = Math.round(SEL_MAX + eased * (REVEAL_MAX - SEL_MAX));
+    $('#loveMax').textContent = n;
+    $('#scaleMax').textContent = n;
+    if (p < 1) requestAnimationFrame(count);
+    else {
+      slider.value = endPos;
+      loveFill.style.width = endPos + '%';
+      lockedValue = endPos;                     // where refuseSlider snaps back to
+      $('#loveMax').textContent = String(REVEAL_MAX);
+      $('#scaleMax').textContent = String(REVEAL_MAX);
+      Sfx.err();
+      $('#loveVerdict').classList.add('show');
+    }
+  })(performance.now());
+});
+
+/* ── the appeal. it resolves nothing and it's perfect. ─────────────── */
+const appealSheet = $('#appealSheet');
+$('#appealBtn').addEventListener('click', () => {
+  Sfx.soft();
+  appealSheet.classList.add('show');
+  appealSheet.setAttribute('aria-hidden', 'false');
+});
+$('#appealFine').addEventListener('click', () => {
+  Sfx.tap();
+  appealSheet.classList.remove('show');
+  appealSheet.setAttribute('aria-hidden', 'true');
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 5 — PENGUIN CHALLENGE
+   ─────────────────────────────────────────────────────────────────────
+   Chrome-dino, but pink. The penguin jumps; icebergs come faster.
+
+   THE RIG: at 9 points the game takes the controls away and plays a
+   scripted death. A SECRETLY rigged game reads as a BROKEN game — she'd
+   think "this is buggy", then "he built a broken thing", and the joke
+   would never land because she'd never learn it was a joke. So the rig is
+   shown, not hidden: at 9, a heart drifts past and he stops to look at it.
+   Every run. He does not learn. That's the bit.
+   ═══════════════════════════════════════════════════════════════════ */
+const canvas = $('#game'), ctx = canvas.getContext('2d');
+const overlay = $('#gameOverlay');
+
+const G = {
+  W: 360, H: 268,
+  ground: 214,
+  gravity: 3200,
+  jumpV: 780,
+  speed0: 250,
+  speedMax: 300,       // capped so the ridge maths always holds
+  peng: { x: 46, w: 30, h: 34, y: 0, vy: 0, onGround: true, t: 0 },
+  obstacles: [], flakes: [], drifts: [],
+  score: 0, spawned: 0, speed: 250,
+  running: false, dead: false, nextSpawn: 0, last: 0, raf: null,
+  /* scripted-death state */
+  attempt: -1, rigged: false, script: null, loveHeart: null, achieved: false,
+};
+
+/* haptics are a bonus, never load-bearing — iOS Safari has no vibrate() */
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch(e){} };
+
+function fitCanvas(){
+  const dpr = Math.min(devicePixelRatio || 1, 2.5);
+  const rect = canvas.getBoundingClientRect();
+  G.W = rect.width || 360; G.H = 268;
+  G.ground = G.H - 54;
+  canvas.width = G.W * dpr; canvas.height = G.H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', () => { fitCanvas(); });
+
+/* ── drawing ──────────────────────────────────────────────────────── */
+function drawPenguinOn(ctx, p){
+  const x = p.x, y = G.ground - p.h - p.y, w = p.w, h = p.h;
+  const airborne = !p.onGround;
+  const waddle = (airborne || p.frozen) ? 0 : Math.sin(p.t * 15) * 2;
+  const wing = (p.wingAngle !== undefined) ? p.wingAngle
+             : (airborne ? -0.85 : Math.sin(p.t * 15) * .28);
+
+  ctx.save();
+  /* shadow — drawn before the tilt, so the bird leans but its shadow doesn't */
+  ctx.globalAlpha = airborne ? .12 : .2;
+  ctx.fillStyle = '#B02A5C';
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, G.ground + 2, w/2 - (airborne ? 5 : 0), 3.2, 0, 0, 7);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  /* scarf tail — drawn before the body so it trails behind him */
+  if (p.scarf){
+    const pts = [{ x: x + w/2 - 1, y: y + 21 }, ...p.scarf];
+    ctx.strokeStyle = '#FF6FA5'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let i = 0; i < pts.length - 1; i++){
+      ctx.beginPath();
+      ctx.lineWidth = 5.5 - i * 1.2;          // tapers to a point
+      ctx.moveTo(pts[i].x, pts[i].y);
+      ctx.lineTo(pts[i+1].x, pts[i+1].y);
+      ctx.stroke();
+    }
+  }
+
+  /* tilt — used only when he stops to look up at the heart */
+  if (p.tilt){
+    ctx.translate(x + w/2, y + h/2);
+    ctx.rotate(p.tilt);
+    ctx.translate(-(x + w/2), -(y + h/2));
+  }
+
+  /* feet */
+  ctx.fillStyle = '#FF9A3D';
+  ctx.beginPath(); ctx.ellipse(x + 9,  y + h - 1 + waddle*.4, 5.5, 2.6, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x + 21, y + h - 1 - waddle*.4, 5.5, 2.6, 0, 0, 7); ctx.fill();
+
+  /* body */
+  ctx.fillStyle = '#3C2440';
+  ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, 7); ctx.fill();
+
+  /* wings */
+  ctx.save();
+  ctx.translate(x + 3.5, y + h*.5);
+  ctx.rotate(wing);
+  ctx.beginPath(); ctx.ellipse(0, 0, 3.6, 9, 0, 0, 7); ctx.fill();
+  ctx.restore();
+
+  /* belly */
+  ctx.fillStyle = '#FFF6FA';
+  ctx.beginPath(); ctx.ellipse(x + w/2 + 2, y + h/2 + 3, w/2 - 6.5, h/2 - 5.5, 0, 0, 7); ctx.fill();
+
+  /* cheek blush */
+  ctx.fillStyle = 'rgba(255,120,168,.75)';
+  ctx.beginPath(); ctx.ellipse(x + w - 8, y + 13, 3.4, 2.4, 0, 0, 7); ctx.fill();
+
+  /* eye */
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath(); ctx.ellipse(x + w - 9.5, y + 8.5, 3.4, 3.8, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#2A1330';
+  ctx.beginPath(); ctx.arc(x + w - 8.6, y + 9, 1.9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath(); ctx.arc(x + w - 9.4, y + 8.1, .8, 0, 7); ctx.fill();
+
+  /* beak */
+  ctx.fillStyle = '#FF9A3D';
+  ctx.beginPath();
+  ctx.moveTo(x + w - 4, y + 12.5); ctx.lineTo(x + w + 5, y + 15); ctx.lineTo(x + w - 4, y + 17.5);
+  ctx.closePath(); ctx.fill();
+
+  /* the neck band — on top of the bird, where a scarf actually sits */
+  if (p.scarf){
+    ctx.fillStyle = '#FF6FA5';
+    ctx.beginPath();
+    ctx.ellipse(x + w/2 + 1, y + 21, w/2 - 2.5, 3.2, 0, 0, 7);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawPenguin(p){ drawPenguinOn(ctx, p); }
+
+function drawIceberg(o){
+  const baseY = G.ground;
+  ctx.save();
+  /* shadow */
+  ctx.globalAlpha = .13; ctx.fillStyle = '#B02A5C';
+  ctx.beginPath(); ctx.ellipse(o.x + o.w/2, baseY + 2, o.w/2 + 2, 3, 0, 0, 7); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  const g = ctx.createLinearGradient(o.x, baseY - o.h, o.x + o.w, baseY);
+  g.addColorStop(0, '#FFFFFF'); g.addColorStop(.55, '#FFE3EE'); g.addColorStop(1, '#FFC3DA');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(o.x, baseY);
+  ctx.lineTo(o.x + o.w * .30, baseY - o.h * .72);
+  ctx.lineTo(o.x + o.w * .52, baseY - o.h);
+  ctx.lineTo(o.x + o.w * .74, baseY - o.h * .60);
+  ctx.lineTo(o.x + o.w, baseY);
+  ctx.closePath(); ctx.fill();
+
+  /* facet highlight */
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.beginPath();
+  ctx.moveTo(o.x + o.w * .52, baseY - o.h);
+  ctx.lineTo(o.x + o.w * .30, baseY - o.h * .72);
+  ctx.lineTo(o.x + o.w * .40, baseY);
+  ctx.lineTo(o.x + o.w * .52, baseY);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawScene(){
+  /* sky */
+  const sky = ctx.createLinearGradient(0, 0, 0, G.H);
+  sky.addColorStop(0, '#FFF9FC'); sky.addColorStop(.62, '#FFEDF4'); sky.addColorStop(1, '#FFE0EC');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, G.W, G.H);
+
+  /* far mountains (parallax) */
+  ctx.fillStyle = 'rgba(255,180,208,.34)';
+  const off = (G.dist * .12) % (G.W + 200);
+  for (let k = -1; k < 3; k++){
+    const bx = k * 190 - off;
+    ctx.beginPath();
+    ctx.moveTo(bx, G.ground);
+    ctx.lineTo(bx + 62, G.ground - 74);
+    ctx.lineTo(bx + 130, G.ground);
+    ctx.closePath(); ctx.fill();
+  }
+
+  /* snow drifts (mid parallax) */
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  const off2 = (G.dist * .4) % 130;
+  for (let k = -1; k < 5; k++){
+    const bx = k * 130 - off2;
+    ctx.beginPath(); ctx.ellipse(bx, G.ground + 4, 46, 9, 0, 0, 7); ctx.fill();
+  }
+
+  /* ground */
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, G.ground + 1, G.W, G.H - G.ground);
+  ctx.strokeStyle = 'rgba(224,49,111,.22)'; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(0, G.ground + 1); ctx.lineTo(G.W, G.ground + 1); ctx.stroke();
+
+  /* speed ticks on the ice */
+  ctx.strokeStyle = 'rgba(224,49,111,.16)'; ctx.lineWidth = 2;
+  const off3 = (G.dist) % 46;
+  for (let k = -1; k < 10; k++){
+    const bx = k * 46 - off3;
+    ctx.beginPath(); ctx.moveTo(bx, G.ground + 16); ctx.lineTo(bx + 13, G.ground + 16); ctx.stroke();
+  }
+
+  /* drifting snowflakes */
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  G.flakes.forEach(f => { ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.fill(); });
+}
+
+/* ── spawning ─────────────────────────────────────────────────────── */
+function spawn(){
+  G.spawned++;
+
+  /* Normal icebergs. A double counts as ONE point, not two — so the score
+     tracks spawns cleared and tops out at 9 on its own.
+     These dimensions are tuned, not guessed: they leave a ~21px tap window at
+     the slowest speed and ~41px at the fastest. Taller/wider doubles drop that
+     to ~4px (frame-perfect), and she'd never survive to 9 — which is where the
+     joke actually lives. Don't make these bigger. */
+  const double = G.spawned > 4 && Math.random() < .28;
+  if (double){
+    G.obstacles.push({ x: G.W + 20, w: 24, h: 34, passed: false });
+    G.obstacles.push({ x: G.W + 20 + 24 + 10, w: 22, h: 30, passed: false, noScore: true });
+  } else {
+    G.obstacles.push({ x: G.W + 20, w: 24, h: 30 + Math.random() * 18, passed: false });
+  }
+
+  const gap = 300 + Math.random() * 160;      // distance to next spawn, in px
+  G.nextSpawn = gap;
+}
+
+/* ── DISTRACTED BY LOVE ────────────────────────────────────────────
+   Armed the instant she hits 9. From here the game is on rails and she
+   cannot win — but she can SEE that she cannot win, which is the entire
+   difference between a joke and a bug. A heart drifts past. He stops
+   running, looks up, and tilts his head at it while the world keeps
+   scrolling and an iceberg does not. ──────────────────────────────── */
+function armRig(){
+  G.nextSpawn = 9e9;                                   // no more real obstacles
+  G.obstacles = G.obstacles.filter(o => o.passed);     // clear the road ahead
+  G.rigged = true;
+  G.script = { fired: false, t: 0 };
+  /* r is the whole gag: he stops for THIS, so it has to be worth stopping
+     for. r=32 renders ~44px — half again his size. (r is a bezier control
+     distance, not the visual radius: the drawn heart is ~1.4x r.) */
+  G.loveHeart = { x: G.W + 40, y: 62, r: 32, vx: -110 };
+  G.obstacles.push({ x: G.W + 380, w: 26, h: 40, passed: true, fatal: true });
+}
+
+function runRig(dt){
+  const p = G.peng, S = G.script, h = G.loveHeart;
+  S.t += dt;
+  h.x += h.vx * dt;
+  h.y += Math.sin(S.t * 2.2) * 8 * dt;
+
+  /* ~1.1s before the iceberg. long enough for her to notice he has
+     stopped taking her calls. */
+  if (!S.fired && h.x < G.W * .72){
+    S.fired = true;
+    p.frozen = true;                 // everything else keeps scrolling. not him.
+    p.tilt = -.30;                   // head up
+    p.wingAngle = .1;
+    Sfx.tone(660, .5, 'sine', .07, 880);
+  }
+}
+
+/* ── scripted-death props ─────────────────────────────────────────── */
+function drawHeartShape(c, x, y, r, fill, alpha = 1){
+  c.save(); c.globalAlpha = alpha; c.fillStyle = fill;
+  c.beginPath();
+  c.moveTo(x, y + r * .78);
+  c.bezierCurveTo(x - r * 1.3, y - r * .3, x - r * .45, y - r * 1.1, x, y - r * .35);
+  c.bezierCurveTo(x + r * .45, y - r * 1.1, x + r * 1.3, y - r * .3, x, y + r * .78);
+  c.closePath(); c.fill(); c.restore();
+}
+/* ── THE SCARF ─────────────────────────────────────────────────────
+   Three segments, each easing toward the one in front at ~2 frames of
+   lag, plus airspeed pushing it backward and gravity pulling it down.
+   Costs nothing, does nothing, and is the reason the game reads as
+   expensive: personality lives in motion, not in features. ───────── */
+function updateScarf(p, dt, ground, speed){
+  const ax = p.x + p.w / 2 - 1;
+  const ay = (ground - p.h - p.y) + 21;
+  if (!p.scarf) p.scarf = [0, 1, 2].map(() => ({ x: ax, y: ay }));
+
+  const wind  = -(speed * .022) - 1.4;        // it streams behind him
+  const droop = p.onGround ? 2.6 : 1.0;       // and hangs when he isn't moving
+  const k = Math.min(1, dt * 26);             // ≈2 frames of lag per segment
+  let tx = ax, ty = ay;
+  for (const s of p.scarf){
+    tx += wind; ty += droop;
+    s.x += (tx - s.x) * k;
+    s.y += (ty - s.y) * k;
+    tx = s.x; ty = s.y;
+  }
+}
+
+/* ── loop ─────────────────────────────────────────────────────────── */
+function resetGame(){
+  G.attempt++;
+  G.rigged = false; G.script = null; G.loveHeart = null;
+  G.peng.y = 0; G.peng.vy = 0; G.peng.onGround = true; G.peng.t = 0;
+  G.peng.tilt = 0; G.peng.frozen = false; G.peng.wingAngle = undefined;
+  G.peng.scarf = null;                       // re-seeds on the first frame
+  G.obstacles = []; G.score = 0; G.spawned = 0; G.speed = G.speed0;
+  G.dist = 0; G.dead = false; G.nextSpawn = 190;
+  G.flakes = Array.from({length: 16}, () => ({
+    x: Math.random()*G.W, y: Math.random()*G.ground, r: .8 + Math.random()*1.6,
+    vy: 6 + Math.random()*14, vx: -4 - Math.random()*10
+  }));
+  $('#gScore').textContent = '0';
+}
+
+function jump(){
+  if (!G.running || G.dead) return;
+  if (G.peng.frozen) return;                 // he is busy. he is looking at a heart.
+  if (!G.peng.onGround) return;              // no double jumps. sorry.
+  G.peng.vy = -G.jumpV; G.peng.onGround = false;
+  Sfx.jump();
+}
+
+function hits(p, o){
+  const px = p.x + 3, pw = p.w - 6;          // slightly forgiving hitbox
+  const py = G.ground - p.h - p.y + 3, ph = p.h - 5;
+  return px < o.x + o.w && px + pw > o.x && py + ph > G.ground - o.h;
+}
+
+function frame(now){
+  if (!G.running) return;
+  const dt = Math.min((now - G.last) / 1000, .034);
+  G.last = now;
+
+  /* speed ramps up, then caps */
+  G.speed = Math.min(G.speedMax, G.speed + dt * 5.5);
+  G.dist += G.speed * dt;
+
+  /* the rig drives everything once it's armed */
+  if (G.rigged) runRig(dt);
+
+  /* penguin physics */
+  const p = G.peng;
+  p.t += dt;
+  p.vy += G.gravity * dt;
+  p.y -= p.vy * dt;
+  if (p.y <= 0){ p.y = 0; p.vy = 0; p.onGround = true; }
+  updateScarf(p, dt, G.ground, G.speed);
+
+  /* snow */
+  G.flakes.forEach(f => {
+    f.y += f.vy * dt; f.x += f.vx * dt;
+    if (f.y > G.ground){ f.y = -4; f.x = Math.random() * G.W; }
+    if (f.x < -4) f.x = G.W + 4;
+  });
+
+  /* obstacles */
+  G.nextSpawn -= G.speed * dt;
+  if (G.nextSpawn <= 0) spawn();
+
+  for (const o of G.obstacles){
+    o.x -= G.speed * dt;
+    if (!o.passed && o.x + o.w < p.x){
+      o.passed = true;
+      if (!o.noScore){                        // trailing halves of a double never score
+        G.score = Math.min(G.score + 1, CONFIG.gameMaxPossible);   // hard ceiling. always.
+        $('#gScore').textContent = G.score;
+
+        if (G.score === CONFIG.gameMaxPossible && !G.rigged){
+          /* the game tells her she is about to win, and then it isn't.
+             congratulating her IMMEDIATELY BEFORE betraying her is the
+             cruellest and best beat in the whole thing. */
+          const el = $('#gScore');
+          el.classList.remove('gold'); void el.offsetWidth; el.classList.add('gold');
+          $('.game-wrap').classList.add('flash');
+          setTimeout(() => $('.game-wrap').classList.remove('flash'), 240);
+          Sfx.tone(340, .6, 'sine', .13, 1500);        // the rising whoosh
+          buzz(45);
+          armRig();
+        } else {
+          Sfx.tone(880 + G.score * 40, .06, 'sine', .08);
+        }
+      }
+    }
+    if (hits(p, o)) return gameOver();
+  }
+  G.obstacles = G.obstacles.filter(o => o.x > -70);
+
+  renderWorld();
+  G.raf = requestAnimationFrame(frame);
+}
+
+/* one renderer, used by the loop and by the freeze-frame */
+function renderWorld(){
+  drawScene();
+  if (G.loveHeart) drawHeartShape(ctx, G.loveHeart.x, G.loveHeart.y, G.loveHeart.r, '#FF6FA5', .9);
+  G.obstacles.forEach(drawIceberg);
+  drawPenguin(G.peng);
+}
+
+function startGame(){
+  fitCanvas(); resetGame();
+  $('#gameRestart').classList.remove('show');
+  overlay.classList.remove('hide');
+  overlay.innerHTML = '<span class="tapcue">Tap to jump</span>';
+  $('#gameResult').style.display = 'none';
+  $('.game-wrap').style.display = '';
+  drawScene(); drawPenguin(G.peng);
+
+}
+
+function beginGame(){
+  if (G.running || G.dead) return;
+  overlay.classList.add('hide');
+  $('#gameRestart').classList.add('show');
+  G.running = true; G.last = performance.now();
+  G.raf = requestAnimationFrame(frame);
+  jump();
+}
+
+/* input — registered once, not per retry */
+canvas.addEventListener('pointerdown',  e => { e.preventDefault(); G.running ? jump() : beginGame(); });
+overlay.addEventListener('pointerdown', e => { e.preventDefault(); beginGame(); });
+addEventListener('keydown', e => {
+  if (e.code !== 'Space' && e.code !== 'ArrowUp') return;
+  if (!$('#s-game').classList.contains('active')) return;
+  e.preventDefault();
+  G.running ? jump() : beginGame();
+});
+
+async function gameOver(){
+  G.running = false; G.dead = true;
+  cancelAnimationFrame(G.raf);
+  $('#gameRestart').classList.remove('show');   // Try Again lives on the card
+  Sfx.die();
+
+  /* freeze frame — the pose is preserved, because on a scripted death the
+     pose IS the joke (mid-high-five, nose against a wall, staring at a heart) */
+  const saved = { ...G.peng };
+  G.peng.tilt = (G.peng.tilt || 0) + .34;
+  renderWorld();
+  Object.assign(G.peng, saved);
+  ctx.fillStyle = 'rgba(255,240,246,.35)'; ctx.fillRect(0, 0, G.W, G.H);
+
+  await wait(REDUCED ? 0 : 900);
+  $('#gFinal').textContent = G.score;
+
+  /* the driest possible delivery of the funniest line on screen */
+  const cause = $('#gCause');
+  if (G.rigged){ cause.textContent = CONFIG.deathCause; cause.style.display = ''; }
+  else cause.style.display = 'none';
+
+  /* a medal, for the exact behaviour the game is punishing */
+  if (G.attempt >= 4 && !G.achieved){
+    G.achieved = true;
+    const t = $('#gAchv');
+    setTimeout(() => { t.classList.add('show'); Sfx.ok(); buzz(20); }, 500);
+    setTimeout(() => t.classList.remove('show'), 4800);
+  }
+  $('#gameResult').style.display = 'flex';
+  $('#gameResult').style.animation = 'riseIn .6s var(--ease) both';
+}
+
+onEnter['s-game'] = () => {
+  G.running = false;
+  /* if she's already played, skip the intro card on re-entry */
+  if ($('#gameStage').style.display === 'flex') setTimeout(startGame, 60);
+  else drawIdle();
+};
+
+/* ── the idle penguin on the start card ───────────────────────────── */
+const idleCv = $('#idleCanvas'), ictx = idleCv.getContext('2d');
+let idleRaf = null, idleT = 0;
+const idlePeng = { x: 0, w: 30, h: 34, y: 0, vy: 0, onGround: true, t: 0, scarf: null };
+function drawIdle(){
+  cancelAnimationFrame(idleRaf);
+  const dpr = Math.min(devicePixelRatio || 1, 2.5);
+  const r = idleCv.getBoundingClientRect();
+  const w = r.width || 280, hh = 96;
+  idleCv.width = w * dpr; idleCv.height = hh * dpr;
+  ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  /* his own object, so his scarf doesn't share coordinates with the
+     in-game bird standing on a different ground line */
+  idlePeng.x = w / 2 - 15;
+  idlePeng.scarf = null;
+
+  const loop = () => {
+    idleT += 1 / 60;
+    ictx.clearRect(0, 0, w, hh);
+    const savedGround = G.ground;
+    G.ground = hh - 14;
+    idlePeng.t = idleT;
+    updateScarf(idlePeng, 1 / 60, G.ground, 26);   // just a draught, while he waits
+    drawPenguinOn(ictx, idlePeng);
+    G.ground = savedGround;
+    idleRaf = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+$('#startChallenge').addEventListener('click', () => {
+  Sfx.tap();
+  cancelAnimationFrame(idleRaf);
+  $('#gameIntro').style.display = 'none';
+  $('#gameStage').style.display = 'flex';
+  $('#gameStage').style.animation = 'riseIn .5s var(--ease) both';
+  setTimeout(startGame, 60);
+});
+
+$('#retryBtn').addEventListener('click', () => { Sfx.tap(); startGame(); });
+
+/* bail out mid-run without waiting to die. stopPropagation so the tap
+   doesn't also reach the canvas and make him jump on the way out. */
+$('#gameRestart').addEventListener('pointerdown', e => {
+  e.preventDefault(); e.stopPropagation();
+  Sfx.tap(); startGame();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 6 — RELATIONSHIP QUIZ
+   ═══════════════════════════════════════════════════════════════════ */
+let qIndex = 0, skipsLeft = CONFIG.skipsAllowed, picked = null, answering = false;
+
+$('#quizStart').addEventListener('click', () => {
+  Sfx.tap();
+  $('#quizIntro').style.display = 'none';
+  $('#quizStage').style.display = 'block';
+  $('#quizStage').style.animation = 'riseIn .5s var(--ease) both';
+  qIndex = 0; skipsLeft = CONFIG.skipsAllowed;
+  buildPips(); renderQuestion();
+});
+
+function buildPips(){
+  $('#quizPips').innerHTML = CONFIG.quiz.map(() => '<span class="pip"></span>').join('');
+}
+function paintPips(){
+  $$('#quizPips .pip').forEach((p, i) => {
+    p.classList.toggle('done', i < qIndex);
+    p.classList.toggle('now', i === qIndex);
+  });
+}
+
+function renderQuestion(){
+  const q = CONFIG.quiz[qIndex];
+  paintPips();
+  $('#quizCount').textContent = `Question ${qIndex + 1}`;
+  $('#skipNote').textContent = skipsLeft ? `${skipsLeft} skip remaining` : 'No skips remaining';
+  $('#skipBtn').disabled = skipsLeft === 0;
+  picked = null; answering = false;
+
+  const body = $('#qbody');
+  body.className = 'qbody';
+  const prompt = `<p class="serif-note" style="margin-bottom:2px">${q.q.replace(/\n/g, '<br>')}</p>`;
+
+  /* Q5 isn't multiple choice — she gets to type, which makes it worse */
+  body.innerHTML = q.type === 'text'
+    ? prompt + `
+      <div class="answer-field">
+        <input type="text" id="qInput" placeholder="Type your answer"
+               autocomplete="off" autocorrect="off" spellcheck="false" />
+        <button class="btn" id="qSubmit">Submit</button>
+      </div>`
+    : prompt + `
+      <div class="opts">
+        ${q.options.map((o, i) => `<button class="opt" data-opt="${i}">${o}</button>`).join('')}
+      </div>`;
+
+  if (q.type === 'text') setTimeout(() => $('#qInput')?.focus(), 300);
+}
+
+/* ── the reply ─────────────────────────────────────────────────────
+   The lines arrive one at a time, and the last one is allowed to sit
+   there for a moment before the quiz moves on. */
+async function showReply(ok, lines){
+  const body = $('#qbody');
+  const vp = document.createElement('div');
+  vp.className = 'vp ' + (ok ? 'ok' : 'bad');
+  vp.innerHTML = `<div class="vp-head"><span class="vp-mark">${ok ? '✓' : '✕'}</span>${
+    ok ? 'Correct.' : 'Incorrect.'}</div>`;
+  body.appendChild(vp);
+  ok ? Sfx.ok() : Sfx.err();
+  buzz(ok ? 18 : 45);
+
+  await wait(REDUCED ? 0 : 480);
+  for (const line of (lines || [])){
+    const d = document.createElement('div');
+    d.className = 'vp-line';
+    d.textContent = line;
+    vp.appendChild(d);
+    Sfx.soft();
+    await wait(REDUCED ? 40 : 780);
+  }
+  await wait(REDUCED ? 0 : 1300);      // let it land before moving on
+}
+
+function lockOptions(){
+  $$('#qbody .opt').forEach(o => o.classList.add('locked'));
+  const inp = $('#qInput'), sub = $('#qSubmit');
+  if (inp) inp.disabled = true;
+  if (sub) sub.disabled = true;
+  $('#skipBtn').disabled = true;
+}
+
+async function answer(q, pickedIdx, skipped){
+  if (answering) return;
+  answering = true;
+
+  let ok = false, lines;
+  if (skipped){
+    /* She does not get to escape. A skip is scored as a miss, and it falls
+       back to whatever that question already had to say: the bespoke line
+       first, then the reveal of the answer she dodged, then the default. */
+    lines = q.skipReply || q.wrong || q.reply || CONFIG.skipReply;
+  }
+  else if (q.type === 'text'){
+    /* check her typed answer against the accepted list */
+    const val = ($('#qInput')?.value || '').trim().toLowerCase();
+    ok = (q.accept || []).some(a => a.toLowerCase() === val);
+    lines = ok ? (q.correct || []) : q.reply;
+  }
+  else if (q.replies)       lines = q.replies[pickedIdx];  // impossible: reply per door
+  else { ok = pickedIdx === q.answer; lines = ok ? (q.correct || []) : q.wrong; }
+
+  lockOptions();
+  await showReply(ok, lines);
+  nextQuestion();
+}
+
+$('#qbody').addEventListener('click', async e => {
+  const q = CONFIG.quiz[qIndex];
+
+  const sub = e.target.closest('#qSubmit');
+  if (sub){
+    const v = ($('#qInput')?.value || '').trim();
+    if (!v) { $('#qInput')?.focus(); return; }             // say something
+    Sfx.tap();
+    return answer(q, null, false);
+  }
+
+  const b = e.target.closest('.opt');
+  if (!b || picked !== null || answering) return;
+  picked = +b.dataset.opt;
+  $$('#qbody .opt').forEach(o => o.classList.remove('picked'));
+  b.classList.add('picked');
+  Sfx.tap();
+  await wait(REDUCED ? 0 : 420);
+  answer(q, picked, false);
+});
+
+/* enter submits the text question */
+$('#qbody').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'qInput'){ e.preventDefault(); $('#qSubmit')?.click(); }
+});
+
+$('#skipBtn').addEventListener('click', async () => {
+  if (skipsLeft === 0 || answering) return;
+  skipsLeft--;
+  Sfx.soft();
+  answer(CONFIG.quiz[qIndex], null, true);
+});
+
+async function nextQuestion(){
+  const body = $('#qbody');
+  body.classList.add('out');
+  await wait(REDUCED ? 0 : 230);
+  qIndex++;
+  if (qIndex < CONFIG.quiz.length){ renderQuestion(); }
+  else { finishQuiz(); }
+}
+
+/* ── the results turn: fail → "…you're cute though" ──────────────── */
+async function finishQuiz(){
+  $('#quizStage').style.display = 'none';
+  $('#quizResult').style.display = 'block';
+  $('#quizResult').style.animation = 'riseIn .5s var(--ease) both';
+
+  await runConsole($('#console2'), [
+    { t: 'Calculating results', dots: true, spin: true, wait: 2600 },
+    { t: `${CONFIG.FAKE_SCORE} / ${CONFIG.SHOWN_TOTAL} correct`, hot: true, wait: 1300 },
+    { t: `Required: ${CONFIG.REQUIRED_SCORE} / ${CONFIG.SHOWN_TOTAL}`, wait: 1200 },
+  ]);
+  Sfx.err();
+  const fail = document.createElement('div');
+  fail.className = 'line hot';
+  fail.innerHTML = `<span class="ok">✕</span><span>Verification failed.</span>`;
+  $('#console2').appendChild(fail);
+
+  await wait(REDUCED ? 0 : 2400);
+
+  /* the wholesome turn */
+  const el = $('#console2');
+  el.style.transition = 'opacity .5s var(--ease)';
+  el.style.opacity = '0';
+  await wait(REDUCED ? 0 : 520);
+  el.innerHTML = '';
+  el.style.opacity = '1';
+  el.classList.remove('console');
+  el.style.cssText = 'text-align:center;min-height:132px;display:flex;flex-direction:column;justify-content:center;gap:10px';
+
+  const beats = [
+    { t: '…', cls: 'fine' },
+    { t: 'You know what…', cls: 'serif-note' },
+    { t: "We'll give you the benefit of the doubt.", cls: 'serif-note' },
+    { t: "We'll assume you love your boyfriend enough.", cls: 'serif-note' },
+  ];
+  for (const b of beats){
+    const d = document.createElement('div');
+    d.className = b.cls;
+    d.style.animation = 'riseIn .6s var(--ease) both';
+    d.textContent = b.t;
+    el.appendChild(d);
+    Sfx.soft();
+    await wait(REDUCED ? 60 : 1050);
+  }
+  Sfx.ok(); heartBurst(8);
+  await wait(400);
+  revealBtn($('#quizProceed'));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 7 — SUBSCRIPTION RENEWAL
+   NO runs away. YES grows. Nobody gets hurt.
+   ═══════════════════════════════════════════════════════════════════ */
+const arena = $('#arena'), yesBtn = $('#yesBtn'), noBtn = $('#noBtn');
+const NO_TAUNTS = ['NO', 'NO', 'no', 'no?', 'nope', 'n-no', 'no…', 'no??',
+                   'nooo', 'no!', 'n…', 'stop', 'no.', 'no.', 'no.', 'no.'];
+let dodges = 0;
+
+function fleeNo(e){
+  if (e){ e.preventDefault(); e.stopPropagation(); }
+  dodges++;
+  Sfx.tone(900 - dodges * 45, .06, 'sine', .07);
+
+  const a = arena.getBoundingClientRect();
+  const bw = noBtn.offsetWidth, bh = noBtn.offsetHeight;
+  const padX = bw / 2 + 6, padY = bh / 2 + 6;
+
+  /* jump somewhere far from where it currently is */
+  const cur = { x: noBtn.offsetLeft, y: noBtn.offsetTop };
+  let x, y, tries = 0;
+  do {
+    x = padX + Math.random() * (a.width  - padX * 2);
+    y = padY + Math.random() * (a.height - padY * 2);
+    tries++;
+  } while (Math.hypot(x - cur.x, y - cur.y) < 110 && tries < 24);
+
+  noBtn.style.left = x + 'px';
+  noBtn.style.top  = y + 'px';
+  noBtn.style.transform = `translate(-50%,-50%) rotate(${(Math.random()*26-13)}deg)`;
+  noBtn.textContent = NO_TAUNTS[Math.min(dodges, NO_TAUNTS.length - 1)];
+
+  /* NO shrinks, YES grows — the outcome gets more inevitable each time.
+     The shrink is spread over more dodges now, so it keeps running longer. */
+  const t = Math.min(dodges / 14, 1);
+  noBtn.style.width = (132 - 74 * t) + 'px';
+  noBtn.style.minHeight = (50 - 22 * t) + 'px';
+  noBtn.style.fontSize = (15 - 5 * t) + 'px';
+  noBtn.style.opacity = 1 - .6 * t;
+
+  yesBtn.style.width = Math.min(224 + dodges * 26, arena.offsetWidth) + 'px';
+  yesBtn.style.fontSize = (17.5 + dodges * 1.8) + 'px';
+  yesBtn.style.top = (34 + Math.min(dodges * 1.4, 16)) + '%';
+  yesBtn.style.minHeight = (58 + dodges * 5) + 'px';
+  yesBtn.style.boxShadow = `0 4px 10px rgba(224,49,111,.24), 0 ${16 + dodges*3}px ${38 + dodges*5}px -10px rgba(224,49,111,.6)`;
+
+  if (dodges >= 16) noBtn.style.pointerEvents = 'none';  // after a long chase, it finally hides
+}
+
+/* catch every way she might try to press it, on every device */
+['pointerdown','pointerenter','mouseenter','touchstart','click','focus'].forEach(evt =>
+  noBtn.addEventListener(evt, fleeNo, { passive: false })
+);
+
+yesBtn.addEventListener('click', async () => {
+  Sfx.win(); heartBurst(22);
+  completeStep(5);
+  yesBtn.textContent = 'Renewed ❤️';
+  await wait(REDUCED ? 0 : 1000);
+  showScreen('s-final');
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN 8 — THE LETTER
+   ═══════════════════════════════════════════════════════════════════ */
+/* photo */
+const photoFrame = $('#photoFrame');
+if (CONFIG.photoUrl){
+  const img = new Image();
+  img.src = CONFIG.photoUrl; img.alt = 'us';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block';
+  /* size the frame to the image's own ratio so nothing gets cropped */
+  photoFrame.style.background = '#fff';
+  img.onload = () => {
+    if (img.naturalWidth) photoFrame.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+  };
+  photoFrame.appendChild(img);
+} else {
+  photoFrame.innerHTML = `<div class="photo-empty">
+      <span style="font-size:26px">📷</span>
+      <span class="fine" style="color:var(--cerise)">SET CONFIG.photoUrl</span>
+      <span class="fine">put a photo next to index.html<br>and use its filename, e.g. "us.jpg"</span>
+    </div>`;
+}
+
+/* letter */
+const letterMount = $('#letterMount');
+if (CONFIG.letter.trim() === 'INSERT PERSONAL LETTER HERE'){
+  letterMount.innerHTML = `<div class="letter-placeholder">INSERT PERSONAL LETTER HERE<br><br>
+    <span style="letter-spacing:0;text-transform:none;color:var(--plum-40)">
+    edit <b>CONFIG.letter</b> — blank lines make new paragraphs</span></div>`;
+} else {
+  letterMount.className = 'letter';
+  letterMount.innerHTML = CONFIG.letter.trim().split(/\n\s*\n/)
+    .map(p => `<p>${p.trim()}</p>`).join('');
+}
+$('#sigMount').textContent = CONFIG.signature;
+
+/* playlist */
+$('#playlistBtn').addEventListener('click', () => {
+  Sfx.win(); heartBurst(26);
+  window.open(CONFIG.PLAYLIST_URL, '_blank', 'noopener');
+});
+
+onEnter['s-final'] = () => {
+  /* the lights going down in a theatre. The tonal shift becomes a spatial
+     one — she doesn't decide to feel differently, the room just changes. */
+  document.body.classList.add('dusk');
+  document.querySelectorAll('.blob').forEach(b => b.style.animationDuration = '52s');
+  heartBurst(10);
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════════ */
+showScreen('s-landing');
+coldOpen();
+</script>
+</body>
+</html>
