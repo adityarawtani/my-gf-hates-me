@@ -800,10 +800,15 @@ body.dusk .sound{background:rgba(255,255,255,.08);border-color:rgba(255,240,220,
 .reneg:active{color:var(--cerise)}
 
 /* ── accessibility ────────────────────────────────────────────────── */
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
-  .hearts{display:none}
-}
+/* ── motion note ──────────────────────────────────────────────────────
+   This page is a single, deliberately-paced narrative for one recipient, so
+   the timed reveals and gentle fades are treated as content, not incidental
+   motion — they play regardless of the OS "Reduce Motion" setting. (The old
+   reduce-motion rule zeroed every animation, which is what made everything
+   flash by instantly on phones that had the setting enabled.) The only truly
+   ambient loops are the drifting background blobs and floating hearts; if you
+   ever want those calmed for reduce-motion users specifically, gate just those
+   two here rather than the whole page. */
 
 /* ── mobile performance ───────────────────────────────────────────────
    The glass panels sit over the drifting blobs and floating hearts, so
@@ -1246,7 +1251,12 @@ function wait(ms){
     if (!document.hidden) arm();
   });
 }
-const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* The deliberate pauses between beats ARE the experience — they aren't the
+   kind of large sliding/parallax motion that the reduce-motion setting exists
+   to calm. Collapsing them made the whole thing dump out instantly on phones
+   that have Reduce Motion on. So the choreography now plays fully for everyone;
+   only genuinely ambient motion is toned down (see the CSS note below). */
+const REDUCED = false;
 
 /* ═══════════════════════════════════════════════════════════════════
    SOUND — synthesized on the fly, no files, works offline
